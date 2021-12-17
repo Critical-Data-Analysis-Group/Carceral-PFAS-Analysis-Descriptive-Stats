@@ -33,7 +33,7 @@ pb_sf <- st_read("source_datasets/Prison_Boundaries-shp/Prison_Boundaries.shp") 
 
 ## Load point sources with HUC-12 and elevations 
 
-Purpose: All of these files were created in get_HUC_elevation.Rmd. For each of the PFA source dataset, the amount of unique HUCs were counted using the n_distint() function. Thus, the integers returned display the number of unique HUCs that contain a specific PFA source. 
+Return: All of these files were created in get_HUC_elevation.Rmd. For each of the PFA source dataset, the amount of unique HUCs were counted using the n_distinct() function. Thus, the integers returned display the number of unique HUCs that contain a specific PFA source. 
  
 ```{r}
 pb_huc_elevation <- st_read("huc_elevation_datasets/pb_HUC_elevation.gpkg")
