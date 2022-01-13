@@ -1,0 +1,207 @@
+---
+title: "Descriptive Statistics and Adding Block Information for Prison Boundaries"
+author: "Quinn White"
+date: "1/13/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+
+library(tidyverse)
+library(tigris)
+library(sf)
+library(rgdal)
+library(crsuggest)
+
+hifld <- st_read("./data/1075f3ca-0050-4264-82e2-079a2daf2ec5.gdb")
+
+prison_boundaries <- readOGR("/Users/quinnwhite/Desktop/Critical_Data_Lab/descriptive-stats/data/1075f3ca-0050-4264-82e2-079a2daf2ec5.gdb")
+
+
+# use this one 
+# CRS:           EPSG:3857
+prison_boundaries <- st_read("/Users/quinnwhite/Desktop/Critical_Data_Lab/descriptive-stats/data/1075f3ca-0050-4264-82e2-079a2daf2ec5.gdb")
+
+# using tutorial here
+# https://walker-data.com/census-r/spatial-analysis-with-us-census-data.html
+
+state_names <- read_csv("/Users/quinnwhite/Desktop/Critical_Data_Lab/descriptive-stats/data/states.csv")
+
+state_codes <- state_names$Code
+
+# does not work 
+# suggest_crs(prison_boundaries)
+
+test <- c("ID", "CA")
+
+get_blocks <- function(state_code_name) {
+  blocks(state = state_code_name, year = 2020, cb = TRUE) 
+}
+
+# get character vector of state codes 
+state_codes <- prison_boundaries %>% 
+  group_by(STATE) %>% 
+  summarize() %>% 
+  pull(STATE) %>%
+  as.character()
+
+state_county_list <- st_drop_geometry(prison_boundaries) %>% 
+  group_by(STATE, COUNTYFIPS) %>% 
+  summarize() %>% 
+  select(STATE, COUNTYFIPS) %>%
+  mutate(STATE = as.character(STATE),
+         COUNTYFIPS = paste(as.character(COUNTY), "COUNTYFIPS"))  
+
+
+## USE THIS 
+state_county_list <- st_drop_geometry(prison_boundaries) %>% 
+  group_by(COUNTYFIPS, STATE) %>% 
+  summarize() %>% 
+  select( COUNTYFIPS, STATE) %>%
+  mutate(STATE = as.character(STATE),
+         COUNTYFIPS = as.character(COUNTYFIPS),
+         STATEFIPS = substr(COUNTYFIPS, 1, 2),
+         COUNTYCODE= substr(COUNTYFIPS, 
+                             nchar(COUNTYFIPS) - 2, 
+                             nchar(COUNTYFIPS)))  
+
+
+# map over each row in tibble --> https://blog.az.sg/posts/map-and-walk/
+
+t <- map_dfr(test, ~get_blocks(.x)) %>%
+  st_transform(3857)  
+
+sub_prison <- prison_boundaries %>% 
+  filter(STATE == "ID", COUNTYFIPS == "16001")
+
+
+sub_blocks <- blocks(state = "16", county = "001", class = "sf") %>%
+  st_transform(3857)  
+
+sub_blocks <- block_groups(state = "16", county = "001", class = "sf") %>%
+  st_transform(3857)  
+
+# appears to match results from here https://geocoding.geo.census.gov/geocoder/geographies/address?street=15505+SOUTH+PLEASANT+VALLEY+RD%09&city=Kuna&state=ID&zip=83634&benchmark=2020&vintage=2010 quite well
+test <- st_join(sub_prison, sub_blocks, left = TRUE, largest = TRUE)
+
+# note that BLOCKCE10 = Census tabulation block number from documentation here https://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2019/TGRSHP2019_TechDoc.pdf
+
+# st_join selects from the matching records the one with the largest overlap with the target geometry with argument largest = TRUE
+
+
+state_county_test <- state_county_list[(state_county_list$STATEFIPS == "16" | state_county_list$STATEFIPS == "NO") & (state_county_list$COUNTYCODE == "001" | state_county_list$COUNTYFIPS == "NOT AVAILABLE") ,]
+
+state_county_list <- state_county_list
+
+block_groups_test <- pmap_dfr(state_county_test, get_block_groups) 
+  
+
+safer_get_blocks <- possibly(get_block_groups, otherwise = NA_real_, quiet = FALSE)
+
+get_blocks <- function(...) {
+    current <- tibble(...)
+    current_state <- current$STATEFIPS
+    current_state_name <- current$STATE
+
+    prison_subset <- prison_boundaries %>% 
+      filter(STATE == current_state_name, 
+             COUNTYFIPS == current$COUNTYFIPS )
+    
+    blocks_subset <- blocks(state = current_state, 
+                            county = current$COUNTYCODE, 
+                            class = "sf") %>% 
+      st_transform(3857)  
+    
+    print(current)
+    
+    st_join(prison_subset, blocks_subset, left = TRUE, largest = TRUE) %>% 
+      st_drop_geometry()
+
+  }
+
+
+# get block groups 
+block_groups_us <- block_groups(cb = TRUE) %>% 
+  st_transform(3857)
+
+blocks_all <- pmap_dfr(state_county_list, get_block_groups) 
+
+blocks_test <- pmap_dfr(state_county_test, possibly(.f = get_blocks, otherwise = NA_real_))
+
+blocks_test <- pmap_dfr(state_county_test, safely(get_blocks))
+
+state_county_test
+
+
+### WITH ERROR HANDLING
+
+get_blocks <- function(...) {
+    current <- tibble(...)
+    
+    result <- tryCatch(
+      {
+        current_state <- current$STATEFIPS
+        current_state_name <- current$STATE
+    
+        prison_subset <- prison_boundaries %>% 
+          filter(STATE == current_state_name, 
+                 COUNTYFIPS == current$COUNTYFIPS )
+        
+        blocks_subset <- blocks(state = current_state, 
+                                county = current$COUNTYCODE, 
+                                class = "sf") %>% 
+          st_transform(3857)  
+        
+        print(current)
+        
+        st_join(prison_subset, blocks_subset, left = TRUE, largest = TRUE) %>% 
+          st_drop_geometry()
+      },
+      error=function(e) {
+           # message(paste("URL does not seem to exist:", url))
+           # message("Here's the original error message:")
+           # message(cond)
+            # Choose a return value in case of error
+            return()
+        }
+  
+    )
+    return(result)
+
+}
+
+
+
+blocks_test <- pmap_dfr(state_county_test, get_blocks)
+
+
+
+state_county_list_filtered <- state_county_list[state_county_list$COUNTYFIPS != "NOT AVAILABLE",]
+
+
+
+blocks_all <- pmap_dfr(state_county_list_filtered, get_blocks) 
+
+
+
+
+
+
+```
+
+"When geocoding your address, you need to select a benchmark (time period) and select a vintage of geography. The benchmark is the time period when we created a snapshot of our data (generally done twice a year). For example, Public_AR_Census2010 is the snapshot we took of the database in 2010. Public_AR_Current is the most recent snapshot we took of our dataset. The vintage of geography is the census or survey that the data relates to. For example, Census2010_Census2010 are the address ranges from the 2010 Census at the time of the 2010 Census. You can also obtain the 2010 Census address ranges as of our most recent benchmark. The vintages you see available depends on the benchmark you selected."
+
+dec/sf1, year 2010
+
+"Summary File 1 (SF 1) contains detailed tables focusing on age, sex, households, families, and housing units. These tables provide in-depth figures by race and Hispanic origin> some tables are repeated for each of nine race/Latino groups. Counts also are provided for over forty American Indian and Alaska Native tribes and for groups within race categories. The race categories include eighteen Asian groups and twelve Native Hawaiian and Other Pacific Islander groups. Counts of persons of Hispanic origin by country of origin (twenty-eight groups) are also shown. Summary File 1 presents data for the United States, the 50 states, and the District of Columbia in a hierarchical sequence down to the block level for many tabulations, but only to the census tract level for others. Summaries are included for other geographic areas such as ZIP Code Tabulation Areas (ZCTAs) and Congressional districts. Geographic coverage for Puerto Rico is comparable to the 50 states. Data are presented in a hierarchical sequence down the block level for many tabulations, but only to the census tract level for others. Geographic areas include barrios, barrios-pueblo, subbarrios, places, census tracts, block groups, and blocks. Summaries also are included for other geographic areas such as ZIP Code Tabulation Areas (ZCTAs)."
+
+
+pdb/blockgroup, year 2021
+
+Planning Database Block Group Level	The PDB is a database of U.S. housing, demographic, socioeconomic and operational statistics based on select 2010 Decennial Census and select 5-year American Community Survey (ACS) estimates. Data are provided at the census block group level of geography. These data can be used for many purposes, including survey field operations planning.
+
+
