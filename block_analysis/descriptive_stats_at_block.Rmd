@@ -181,7 +181,7 @@ write_csv(blocks_all, "./prison_blocks.csv")
 ```
 
 
-```{r}
+```{r read results}
 
 # read results saved from csv
 
@@ -224,3 +224,14 @@ Sources for this dataset:
 The 2021 PDB contains data from four major source files:  
 * 1. 2010 Census data* – Population and housing
 * 2. 2015 – 2019 5-year ACS sample data* – Population, housing, and socioeconomic
+
+
+
+
+
+##### Useful definitions
+
+* **block groups** = "statistical divisions of census tracts, are generally defined to contain between 600 and 3,000 people, and are used to present data and control block numbering.  A block group consists of clusters of blocks within the same census tract"  
+* **blocks** = "are statistical areas bounded by visible features, such as streets, roads, streams, and railroad tracks, and by nonvisible boundaries, such as selected property lines and city, township, school district, and county limits and short line-of-sight extensions of streets and roads"
+
+

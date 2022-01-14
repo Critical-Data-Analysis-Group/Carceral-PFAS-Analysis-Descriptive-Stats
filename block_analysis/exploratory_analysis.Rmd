@@ -1,0 +1,142 @@
+---
+title: "Exploratory Block Group Analysis"
+author: "Quinn White"
+output: 
+  rmdformats::readthedown:
+    df_print: paged
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# needed packages 
+library(tidyverse)
+# to retrieve census data
+library(censusapi)
+
+```
+
+
+```{r}
+
+# read prison boundaries file from Homeland Infrastructure Foundation-Level Data Platform
+# downloaded in geodatabase form and unzipped, read as sf object
+# link: https://hifld-geoplatform.opendata.arcgis.com/datasets/geoplatform::prison-boundaries/about
+prison_boundaries <- st_read("./1075f3ca-0050-4264-82e2-079a2daf2ec5.gdb")
+
+
+# read results that contain block assignment for each facility saved in csv
+prison_boundaries_blocks <- read_csv("./prison_blocks.csv")
+
+# for prison boundaries file, get list of all state county combinations represented, including the
+# codes for the corresponding states and counties
+# resulting data frame has 4 columns --> 
+#        COUNTYFIPS -- 5 digit code consisting of state code and county code
+#        STATE -- 2 chracter digit state abbreviation 
+#        STATEFIPS -- 2 digit state FIPS
+#        COUNTYCODE -- 3 digit county code
+state_county_list <- st_drop_geometry(prison_boundaries) %>% 
+  group_by(COUNTYFIPS, STATE) %>% 
+  summarize() %>% 
+  select( COUNTYFIPS, STATE) %>%
+  mutate(STATE = as.character(STATE),
+         COUNTYFIPS = as.character(COUNTYFIPS),
+         STATEFIPS = substr(COUNTYFIPS, 1, 2),
+         COUNTYCODE= substr(COUNTYFIPS, 
+                             nchar(COUNTYFIPS) - 2, 
+                             nchar(COUNTYFIPS)))  
+
+
+# remove the NOT AVAILABLE entry  
+state_county_list_filtered <- state_county_list[state_county_list$COUNTYFIPS != "NOT AVAILABLE",]
+
+
+# get all state fips codes in prison boundaries data 
+state_codes <- state_county_list_filtered %>% 
+  group_by(STATEFIPS) %>% 
+  summarize() %>% 
+  pull(STATEFIPS)
+
+
+# can use this function to see what variables are available for the given dataset
+# listCensusMetadata(name = "pdb/blockgroup", vintage = 2021, type = "variables", group = NULL)
+
+
+# get census data for the variables listed at the blockgroup level; block level not available 
+get_census_data_safe <- function(state_code) {
+  region_for_state = paste0("state:", state_code, "+county:*+tract:*")
+  result <- tryCatch( 
+    {
+    getCensus(name = "pdb/blockgroup",
+                      vintage = 2021,
+                      key = "fbbc8b0d3e53089da7cabc380628d6d46ae00444",
+                      vars = c("Block_group",
+                               "County", 
+                               "URBANIZED_AREA_POP_CEN_2010",
+                               "Tot_Population_CEN_2010", 
+                               "Tot_Population_ACS_15_19", 
+                               "Males_ACS_15_19", 
+                               "Females_ACS_15_19",
+                               "Median_Age_ACS_15_19", 
+                               "Hispanic_ACS_15_19",
+                               "NH_White_alone_ACS_15_19",
+                               "NH_Blk_alone_ACS_15_19",
+                               "NH_AIAN_alone_ACS_15_19",
+                               "NH_Asian_alone_ACS_15_19",
+                               "NH_NHOPI_alone_ACS_15_19", 
+                               "NH_SOR_alone_ACS_15_19",
+                               "Pov_Univ_ACS_15_19",
+                               "Prs_Blw_Pov_Lev_ACS_15_19",
+                               "No_Health_Ins_ACS_15_19",
+                               "Tot_Occp_Units_ACS_15_19",
+                               "Aggregate_HH_INC_ACS_15_19",
+                               "Med_HHD_Inc_BG_ACS_15_19",
+                               "Tot_Prns_in_HHD_ACS_15_19",
+                               "Renter_Occp_HU_ACS_15_19",
+                               "Med_House_Value_BG_ACS_15_19",
+                               "pct_ENG_VW_ACSMOE_15_19",
+                               "pct_URBANIZED_AREA_POP_CEN_2010",
+                               "pct_RURAL_POP_CEN_2010",
+                               "pct_Inst_GQ_CEN_2010",
+                               "pct_Inst_GQ_CEN_2010",
+                               "pct_Non_Inst_GQ_CEN_2010"
+                               ),
+                      regionin = region_for_state,
+                      region = "block group:*")
+          } ,
+      error=function(e) {
+            return()
+        } 
+      )
+  return(result)
+}
+
+# get block group level data for every state in state_codes
+blockgroup_level_data <- map_dfr(state_codes,  ~get_census_data_safe(.x))
+
+# remove of redundant columns
+blockgroup_level_data <- blockgroup_level_data %>% 
+  select(-Block_group, County)
+
+# get block group number, which is the first digit of the block number 
+prison_boundaries_blocks <- prison_boundaries_blocks %>% 
+  mutate(block_group = substr(BLOCKCE10, 1,1))
+
+# join prison boundaries data to the census data 
+prison_boundaries_block_census <- left_join(prison_boundaries_blocks, blockgroup_level_data,
+                                            by = c("STATEFP10" = "state",
+                                                   "COUNTYFP10" = "county",
+                                                   "TRACTCE10" = "tract",
+                                                   "block_group" = "block_group"))
+
+
+# all variables in the dataset 
+all_vars <- prison_boundaries_block_census %>% colnames()
+
+
+```
