@@ -140,3 +140,82 @@ all_vars <- prison_boundaries_block_census %>% colnames()
 
 
 ```
+
+
+### Analysis at the Block Group Level
+
+Variable definitions are from the documentation for the [2021 Planning Database](https://www2.census.gov/adrm/PDB/2021/2021_Block_Group_PDB_Documentation.pdf).  
+
+
+First, we can look at the distributions of the median age in block groups where facilities are located.
+
+<div style = "overflow-y: auto; height: 500px; width = 500px;">
+
+```{r, fig.height = 8, fig.width = 8}
+
+library(forcats)
+
+# Distribution of Median Age in Block Groups Where Facilities are Located using Median_Age_ACS_15_19 variable
+prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, TRACTCE10, block_group, Median_Age_ACS_15_19) %>% 
+  summarize() %>%
+  select(Median_Age_ACS_15_19) %>% 
+  ggplot(aes(x = Median_Age_ACS_15_19 )) + 
+  geom_histogram() +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Median Age",
+       subtitle = "2015 – 2019 5-year ACS sample data ",
+       title = "Distribution of Median Age in Block Groups Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5))
+
+# median age distribution faceted by facility type 
+prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, TRACTCE10, block_group, Median_Age_ACS_15_19, TYPE) %>% 
+  summarize() %>%
+  select(Median_Age_ACS_15_19, TYPE) %>% 
+  mutate(TYPE = factor(TYPE,  levels = c("LOCAL", "COUNTY",
+                                        "STATE", "FEDERAL",
+                                        "MULTI", "NOT AVAILABLE"))) %>%
+  ggplot(aes(x = Median_Age_ACS_15_19)) + 
+  geom_histogram() +
+  facet_wrap(~TYPE, scales = "free_y") +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Median Age",
+       subtitle = "2015 – 2019 5-year ACS sample data ",
+       title = "Distribution of Median Age in Block Groups Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5))
+  
+
+# median age distribution faceted by facility security level 
+prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, TRACTCE10, block_group, Median_Age_ACS_15_19, SECURELVL) %>% 
+  summarize() %>%
+  select(Median_Age_ACS_15_19, SECURELVL) %>% 
+  mutate(SECURELVL = factor(SECURELVL,  levels = c("JUVENILE", "MINIMUM",
+                                        "MEDIUM", "MAXIMUM",
+                                        "CLOSE", "NOT AVAILABLE"))) %>%
+  ggplot(aes(x = Median_Age_ACS_15_19)) + 
+  geom_histogram() +
+  facet_wrap(~SECURELVL, scales = "free_y") +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Median Age",
+       subtitle = "2015 – 2019 5-year ACS sample data ",
+       title = "Distribution of Median Age in Block Groups Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5))
+  
+
+
+```
+
+</div> 
+
+
