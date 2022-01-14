@@ -14,50 +14,28 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(tigris)
 library(sf)
-library(rgdal)
-library(crsuggest)
-
-hifld <- st_read("./data/1075f3ca-0050-4264-82e2-079a2daf2ec5.gdb")
-
-prison_boundaries <- readOGR("/Users/quinnwhite/Desktop/Critical_Data_Lab/descriptive-stats/data/1075f3ca-0050-4264-82e2-079a2daf2ec5.gdb")
 
 
-# use this one 
-# CRS:           EPSG:3857
-prison_boundaries <- st_read("/Users/quinnwhite/Desktop/Critical_Data_Lab/descriptive-stats/data/1075f3ca-0050-4264-82e2-079a2daf2ec5.gdb")
+# read prison boundaries file from Homeland Infrastructure Foundation-Level Data Platform
+# downloaded in geodatabase form and unzipped, read as sf object
+# link: https://hifld-geoplatform.opendata.arcgis.com/datasets/geoplatform::prison-boundaries/about
+prison_boundaries <- st_read("./1075f3ca-0050-4264-82e2-079a2daf2ec5.gdb")
 
-# using tutorial here
+
+# print prison_boundaries to see CRS: EPSG:3857
+
+
+# some background information here 
 # https://walker-data.com/census-r/spatial-analysis-with-us-census-data.html
 
-state_names <- read_csv("/Users/quinnwhite/Desktop/Critical_Data_Lab/descriptive-stats/data/states.csv")
 
-state_codes <- state_names$Code
-
-# does not work 
-# suggest_crs(prison_boundaries)
-
-test <- c("ID", "CA")
-
-get_blocks <- function(state_code_name) {
-  blocks(state = state_code_name, year = 2020, cb = TRUE) 
-}
-
-# get character vector of state codes 
-state_codes <- prison_boundaries %>% 
-  group_by(STATE) %>% 
-  summarize() %>% 
-  pull(STATE) %>%
-  as.character()
-
-state_county_list <- st_drop_geometry(prison_boundaries) %>% 
-  group_by(STATE, COUNTYFIPS) %>% 
-  summarize() %>% 
-  select(STATE, COUNTYFIPS) %>%
-  mutate(STATE = as.character(STATE),
-         COUNTYFIPS = paste(as.character(COUNTY), "COUNTYFIPS"))  
-
-
-## USE THIS 
+# for prison boundaries file, get list of all state county combinations represented, including the
+# codes for the corresponding states and counties
+# resulting data frame has 4 columns --> 
+#        COUNTYFIPS -- 5 digit code consisting of state code and county code
+#        STATE -- 2 chracter digit state abbreviation 
+#        STATEFIPS -- 2 digit state FIPS
+#        COUNTYCODE -- 3 digit county code
 state_county_list <- st_drop_geometry(prison_boundaries) %>% 
   group_by(COUNTYFIPS, STATE) %>% 
   summarize() %>% 
@@ -70,11 +48,16 @@ state_county_list <- st_drop_geometry(prison_boundaries) %>%
                              nchar(COUNTYFIPS)))  
 
 
+
+```
+
+
+
+```{r testing, eval = FALSE}
+
 # map over each row in tibble --> https://blog.az.sg/posts/map-and-walk/
 
-t <- map_dfr(test, ~get_blocks(.x)) %>%
-  st_transform(3857)  
-
+# testing -- figuring out how to use st_join to perform a spatial join based on maximum overlap 
 sub_prison <- prison_boundaries %>% 
   filter(STATE == "ID", COUNTYFIPS == "16001")
 
@@ -82,26 +65,28 @@ sub_prison <- prison_boundaries %>%
 sub_blocks <- blocks(state = "16", county = "001", class = "sf") %>%
   st_transform(3857)  
 
-sub_blocks <- block_groups(state = "16", county = "001", class = "sf") %>%
-  st_transform(3857)  
+# sub_blocks <- block_groups(state = "16", county = "001", class = "sf") %>%
+#  st_transform(3857)  
 
-# appears to match results from here https://geocoding.geo.census.gov/geocoder/geographies/address?street=15505+SOUTH+PLEASANT+VALLEY+RD%09&city=Kuna&state=ID&zip=83634&benchmark=2020&vintage=2010 quite well
+# appears to match results from geocoder tool in this link quite well: 
+# https://geocoding.geo.census.gov/geocoder/geographies/address?street=15505+SOUTH+PLEASANT+VALLEY+RD%09&city=Kuna&state=ID&zip=83634&benchmark=2020&vintage=2010 
+
+# largest = TRUE argument means that the spatial join is performed by the largest overlap
+# documentation at https://r-spatial.github.io/sf/reference/st_join.html
+# more info at https://github.com/r-spatial/sf/issues/578
 test <- st_join(sub_prison, sub_blocks, left = TRUE, largest = TRUE)
 
 # note that BLOCKCE10 = Census tabulation block number from documentation here https://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2019/TGRSHP2019_TechDoc.pdf
+# first digit of block number is the block group number
+# https://www.census.gov/programs-surveys/geography/about/glossary.html
 
-# st_join selects from the matching records the one with the largest overlap with the target geometry with argument largest = TRUE
-
-
+# testing error handling
+# row where COUNTYFIPS is "NOT AVAILABLE" creates issues
 state_county_test <- state_county_list[(state_county_list$STATEFIPS == "16" | state_county_list$STATEFIPS == "NO") & (state_county_list$COUNTYCODE == "001" | state_county_list$COUNTYFIPS == "NOT AVAILABLE") ,]
 
-state_county_list <- state_county_list
 
-block_groups_test <- pmap_dfr(state_county_test, get_block_groups) 
-  
 
-safer_get_blocks <- possibly(get_block_groups, otherwise = NA_real_, quiet = FALSE)
-
+# get blocks version 1 -- no error handling, crashes if there is an issue 
 get_blocks <- function(...) {
     current <- tibble(...)
     current_state <- current$STATEFIPS
@@ -124,21 +109,29 @@ get_blocks <- function(...) {
   }
 
 
-# get block groups 
+# get all block groups for United States 
+# unlike blocks, can do this relatively easily 
 block_groups_us <- block_groups(cb = TRUE) %>% 
   st_transform(3857)
 
-blocks_all <- pmap_dfr(state_county_list, get_block_groups) 
-
-blocks_test <- pmap_dfr(state_county_test, possibly(.f = get_blocks, otherwise = NA_real_))
-
-blocks_test <- pmap_dfr(state_county_test, safely(get_blocks))
-
-state_county_test
+# blocks_all <- pmap_dfr(state_county_list, get_block_groups) 
 
 
-### WITH ERROR HANDLING
 
+
+```
+
+```{r get block level information, eval = FALSE}
+
+# version of function with error handling 
+
+# passed a row of the tibble state_county_list, which contains variables:
+#       COUNTYFIPS -- 5 digit code consisting of state code and county code
+#        STATE -- 2 chracter digit state abbreviation 
+#        STATEFIPS -- 2 digit state FIPS
+#        COUNTYCODE -- 3 digit county code
+# retrieves blocks for that state and county and finds which blocks overlap most with prison boundaries
+# breaking it up by county rather than state is due to very large file sizes 
 get_blocks <- function(...) {
     current <- tibble(...)
     
@@ -156,52 +149,78 @@ get_blocks <- function(...) {
                                 class = "sf") %>% 
           st_transform(3857)  
         
-        print(current)
+        print(current) # enables us to see progression of function as it runs 
         
         st_join(prison_subset, blocks_subset, left = TRUE, largest = TRUE) %>% 
           st_drop_geometry()
       },
       error=function(e) {
-           # message(paste("URL does not seem to exist:", url))
-           # message("Here's the original error message:")
-           # message(cond)
-            # Choose a return value in case of error
             return()
         }
-  
     )
     return(result)
-
 }
 
 
-
+# test error handling function on subset 
 blocks_test <- pmap_dfr(state_county_test, get_blocks)
 
-
-
+# remove problematic entry
 state_county_list_filtered <- state_county_list[state_county_list$COUNTYFIPS != "NOT AVAILABLE",]
 
-
-
+# get blocks for all county state combinations in the prison boundaries data set 
+# this will take many hours to run 
+# results saved in file 
 blocks_all <- pmap_dfr(state_county_list_filtered, get_blocks) 
 
-
-
+# save results in csv so we don't have to run the previous line many times (takes many hours to complete)
+write_csv(blocks_all, "./prison_blocks.csv")
 
 
 
 ```
 
+
+```{r}
+
+# read results saved from csv
+
+prison_boundaries_blocks <- read_csv("./prison_blocks.csv")
+
+```
+
+
+### Useful Background 
+
+##### For using [geocoder database](https://geocoding.geo.census.gov/geocoder/geographies/address?street=15505+SOUTH+PLEASANT+VALLEY+RD%09&city=Kuna&state=ID&zip=83634&benchmark=2020&vintage=2010) --
+
 "When geocoding your address, you need to select a benchmark (time period) and select a vintage of geography. The benchmark is the time period when we created a snapshot of our data (generally done twice a year). For example, Public_AR_Census2010 is the snapshot we took of the database in 2010. Public_AR_Current is the most recent snapshot we took of our dataset. The vintage of geography is the census or survey that the data relates to. For example, Census2010_Census2010 are the address ranges from the 2010 Census at the time of the 2010 Census. You can also obtain the 2010 Census address ranges as of our most recent benchmark. The vintages you see available depends on the benchmark you selected."
 
-dec/sf1, year 2010
+The geocoder is defined as "an address look-up tool that converts your address to an approximate coordinate (longitude/latitude) and returns information about the address range that includes the address and the census geography the address is within"
+
+Since this isn't based on overlap, we'll see some differences between the blocks assigned by this system and those by the above code. 
+
+##### Datasets 
+
+###### List of All Census Datasets 
+
+Accessible [here](https://api.census.gov/data.html)
+
+###### dec/sf1, year 2010
 
 "Summary File 1 (SF 1) contains detailed tables focusing on age, sex, households, families, and housing units. These tables provide in-depth figures by race and Hispanic origin> some tables are repeated for each of nine race/Latino groups. Counts also are provided for over forty American Indian and Alaska Native tribes and for groups within race categories. The race categories include eighteen Asian groups and twelve Native Hawaiian and Other Pacific Islander groups. Counts of persons of Hispanic origin by country of origin (twenty-eight groups) are also shown. Summary File 1 presents data for the United States, the 50 states, and the District of Columbia in a hierarchical sequence down to the block level for many tabulations, but only to the census tract level for others. Summaries are included for other geographic areas such as ZIP Code Tabulation Areas (ZCTAs) and Congressional districts. Geographic coverage for Puerto Rico is comparable to the 50 states. Data are presented in a hierarchical sequence down the block level for many tabulations, but only to the census tract level for others. Geographic areas include barrios, barrios-pueblo, subbarrios, places, census tracts, block groups, and blocks. Summaries also are included for other geographic areas such as ZIP Code Tabulation Areas (ZCTAs)."
 
 
-pdb/blockgroup, year 2021
+###### pdb/blockgroup, year 2021
 
-Planning Database Block Group Level	The PDB is a database of U.S. housing, demographic, socioeconomic and operational statistics based on select 2010 Decennial Census and select 5-year American Community Survey (ACS) estimates. Data are provided at the census block group level of geography. These data can be used for many purposes, including survey field operations planning.
+"Planning Database Block Group Level	The PDB is a database of U.S. housing, demographic, socioeconomic and operational statistics based on select 2010 Decennial Census and select 5-year American Community Survey (ACS) estimates. Data are provided at the census block group level of geography. These data can be used for many purposes, including survey field operations planning."
 
+[Documentation](https://www2.census.gov/adrm/PDB/2021/2021_Block_Group_PDB_Documentation.pdf)
 
+[Variables](https://api.census.gov/data/2021/pdb/blockgroup/variables.html)
+
+Sources for this dataset: 
+
+The 2021 PDB contains data from four major source files:  
+* 1. 2010 Census data* – Population and housing
+* 2. 2015 – 2019 5-year ACS sample data* – Population, housing, and socioeconomic
