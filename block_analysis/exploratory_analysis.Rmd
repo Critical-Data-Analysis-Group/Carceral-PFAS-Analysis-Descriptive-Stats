@@ -104,7 +104,9 @@ get_census_data_safe <- function(state_code) {
                                "pct_RURAL_POP_CEN_2010",
                                "pct_Inst_GQ_CEN_2010",
                                "pct_Inst_GQ_CEN_2010",
-                               "pct_Non_Inst_GQ_CEN_2010"
+                               "pct_Non_Inst_GQ_CEN_2010",
+                               "pct_Non_Inst_GQ_CEN_2010",
+                               "pct_URBAN_CLUSTER_POP_CEN_2010"
                                ),
                       regionin = region_for_state,
                       region = "block group:*")
@@ -149,6 +151,8 @@ Variable definitions are from the documentation for the [2021 Planning Database]
 
 First, we can look at the distributions of the median age in block groups where facilities are located.
 
+#### Distribution of Median Age
+
 <div style = "overflow-y: auto; height: 500px; width = 500px;">
 
 ```{r, fig.height = 8, fig.width = 8}
@@ -156,6 +160,8 @@ First, we can look at the distributions of the median age in block groups where 
 library(forcats)
 
 # Distribution of Median Age in Block Groups Where Facilities are Located using Median_Age_ACS_15_19 variable
+
+###### distribution of median age by block group
 prison_boundaries_block_census %>% 
   group_by(STATE, COUNTY, TRACTCE10, block_group, Median_Age_ACS_15_19) %>% 
   summarize() %>%
@@ -171,7 +177,25 @@ prison_boundaries_block_census %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5))
 
+
+###### distribution of median age by facility
+prison_boundaries_block_census %>% 
+  select(Median_Age_ACS_15_19) %>% 
+  ggplot(aes(x = Median_Age_ACS_15_19 )) + 
+  geom_histogram() +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Median Age",
+       subtitle = "2015 – 2019 5-year ACS sample data ",
+       title = "Distribution of Median Age in Block Groups Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5))
+
+
+
 # median age distribution faceted by facility type 
+##### by block group
 prison_boundaries_block_census %>% 
   group_by(STATE, COUNTY, TRACTCE10, block_group, Median_Age_ACS_15_19, TYPE) %>% 
   summarize() %>%
@@ -191,10 +215,33 @@ prison_boundaries_block_census %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5))
   
+##### by facility type
+prison_boundaries_block_census %>% 
+  select(Median_Age_ACS_15_19, TYPE) %>% 
+  mutate(TYPE = factor(TYPE,  levels = c("LOCAL", "COUNTY",
+                                        "STATE", "FEDERAL",
+                                        "MULTI", "NOT AVAILABLE"))) %>%
+  ggplot(aes(x = Median_Age_ACS_15_19)) + 
+  geom_histogram() +
+  facet_wrap(~TYPE, scales = "free_y") +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Median Age",
+       subtitle = "2015 – 2019 5-year ACS sample data ",
+       title = "Distribution of Median Age in Block Groups Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5))
+  
+
 
 # median age distribution faceted by facility security level 
+
+##### by block group
 prison_boundaries_block_census %>% 
-  group_by(STATE, COUNTY, TRACTCE10, block_group, Median_Age_ACS_15_19, SECURELVL) %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, Median_Age_ACS_15_19, 
+           SECURELVL) %>% 
   summarize() %>%
   select(Median_Age_ACS_15_19, SECURELVL) %>% 
   mutate(SECURELVL = factor(SECURELVL,  levels = c("JUVENILE", "MINIMUM",
@@ -213,9 +260,158 @@ prison_boundaries_block_census %>%
         plot.title = element_text(face = "bold", hjust = 0.5))
   
 
+##### by facility
+prison_boundaries_block_census %>% 
+  select(Median_Age_ACS_15_19, SECURELVL) %>% 
+  mutate(SECURELVL = factor(SECURELVL,  levels = c("JUVENILE", "MINIMUM",
+                                        "MEDIUM", "MAXIMUM",
+                                        "CLOSE", "NOT AVAILABLE"))) %>%
+  ggplot(aes(x = Median_Age_ACS_15_19)) + 
+  geom_histogram() +
+  facet_wrap(~SECURELVL, scales = "free_y") +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Median Age",
+       subtitle = "2015 – 2019 5-year ACS sample data ",
+       title = "Distribution of Median Age in Block Groups Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5))
+  
 
 ```
 
 </div> 
+
+#### Distribution of Percentage Urbanized
+
+As defined in the documentation, the variable definitions are as follows:   
+* ```pct_URBANIZED_AREA_POP_CEN_2010```: "percentage of the 2010 Census total population that lives in a densely settled area containing 50,000 or more people"  
+* ```pct_URBAN_CLUSTER_POP_CEN_2010```: "percentage of the 2010 Census total population that lives in a densely settled area containing 2,500 to 49,999 people"
+* ```pct_RURAL_POP_CEN_2010```: "percentage of the 2010 Census total population that lives outside of an urbanized area or urban cluster"
+
+```{r}
+
+# distribution of percentage urbanized
+# by facility 
+prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, pct_URBANIZED_AREA_POP_CEN_2010, FACILITYID) %>% 
+  summarize() %>%
+  select(pct_URBANIZED_AREA_POP_CEN_2010) %>% 
+  ggplot(aes(x = pct_URBANIZED_AREA_POP_CEN_2010 )) + 
+  geom_histogram() +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage Urbanized",
+       subtitle = "2010 Census Data",
+       title = "Distribution of the Percentage Urbanized Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) +
+  ylim(0, 4100)
+
+# how many block groups with multiple facilities 
+#prison_boundaries_block_census %>% 
+#  group_by(STATE, COUNTY, TRACTCE10, block_group) %>% 
+#  summarize(n = n()) %>% filter(n  > 1 ) %>% nrow()
+
+
+# distribution of percentage rural 
+prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, pct_RURAL_POP_CEN_2010, FACILITYID) %>% 
+  summarize() %>%
+  select(pct_RURAL_POP_CEN_2010) %>% 
+  ggplot(aes(x = pct_RURAL_POP_CEN_2010 )) + 
+  geom_histogram() +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage Rural",
+       subtitle = "2015 – 2019 5-year ACS sample data ",
+       title = "Distribution of the Percentage Rural Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) +
+  ylim(0, 4100)
+
+
+# for making tables
+library(kableExtra)
+
+prison_boundaries_block_census %>%
+  select(pct_URBANIZED_AREA_POP_CEN_2010,
+         pct_RURAL_POP_CEN_2010, 
+         pct_URBAN_CLUSTER_POP_CEN_2010) %>%
+  mutate(Density = ifelse(pct_RURAL_POP_CEN_2010 > 50,  "Rural", "Urban")) %>% 
+  group_by(Density) %>%
+  summarize(n =n()) %>%
+  mutate(Density = replace_na(Density, "Missing"),
+         total = sum(n),
+         Percentage = (n / total)*100,
+         Percentage = paste0(as.character(round(Percentage, 2)), '%')) %>%
+  select(Density, Percentage) %>%
+  kbl(caption = "<span style = 'color:black;font-size:2.5vw; margin-left: 2%'><b>Percentage of Facilities in a Block Group that was Mostly Rural or Mostly Urban</b></span>") %>%
+  kable_material(c("striped", "hover")) %>%
+  row_spec(0, background = "#D9DFEE") %>%
+  footnote("Rural block groups are defined here as those where greater than 50% of the 2010 Census total\npopulation for that block group was recorded to live outside of an urbanized area or urban cluster.")
+
+
+tibble("Population Density" = c("Urban", "Urban Cluster", "Rural"),
+       "Means" = c(mean(prison_boundaries_block_census$pct_URBAN_CLUSTER_POP_CEN_2010, na.rm = TRUE),
+                   mean(prison_boundaries_block_census$pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE),
+                    mean(prison_boundaries_block_census$pct_RURAL_POP_CEN_2010, na.rm = TRUE))) %>% kbl()
+
+
+prison_boundaries_block_census %>% 
+  summarize(Urban = mean(pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE),
+            `Urban Cluster` = mean(pct_URBAN_CLUSTER_POP_CEN_2010, na.rm = TRUE),
+            Rural = mean(pct_RURAL_POP_CEN_2010, na.rm = TRUE)) %>% 
+  pivot_longer(cols = 1:3, names_to = "Population Density Category", 
+               values_to = "Mean Percentage") %>%
+  cbind("Median Percentage" = c(  
+          median(prison_boundaries_block_census$pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE),
+            median(prison_boundaries_block_census$pct_URBAN_CLUSTER_POP_CEN_2010, na.rm = TRUE),
+           median(prison_boundaries_block_census$pct_RURAL_POP_CEN_2010, na.rm = TRUE)))  %>%
+  kbl(caption = "<span style = 'color:black;font-size:2.5vw;'><b>&emsp;  Mean and Median Percentages in Urbanized, Urban Cluster, and Rural Areas</b></span><span style = 'float:center'><br> &emsp; Data from the 2010 Census</span>") %>%
+  kable_material(c("striped", "hover")) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
+
+
+  select(pct_URBANIZED_AREA_POP_CEN_2010,
+         pct_RURAL_POP_CEN_2010, 
+         pct_URBAN_CLUSTER_POP_CEN_2010) %>%
+
+# percentage > 50 % urbanized and percentage where < 50 % urbanized 
+
+
+
+###### distribution of median age in rural versus urban settings, where rural blocks are defined as those
+# where more than 50% of the population is rural 
+# mean of the distribution is higher in rural areas, a trend that has been reported elsewhere 
+prison_boundaries_block_census %>% 
+  mutate(Density = ifelse(pct_RURAL_POP_CEN_2010 > 50,
+                          "Rural", "Urban")) %>%
+  group_by(Density) %>%
+    mutate(Mean = mean(Median_Age_ACS_15_19, na.rm =TRUE)) %>%
+    filter(!is.na(Density)) %>% 
+  ggplot(aes(x = Median_Age_ACS_15_19 )) + 
+  facet_wrap(~Density, scales = "free_y") +
+  geom_histogram(alpha = .8) +
+  geom_vline(aes(xintercept = Mean ), color = "darkred") +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Median Age",
+       subtitle = "2015 – 2019 5-year ACS sample data ",
+       title = "Distribution of Median Age in Block Groups Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5))
+
+    
+    
+```
 
 
