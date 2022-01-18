@@ -1136,6 +1136,165 @@ prison_boundaries_block_census %>%
 
 </div> 
 
+## Distribution of the Percentage Receiving Public Assistance Income 
+
+> ```pct_PUB_ASST_INC_ACS_15_19``` is the "percentage of all ACS occupied housing units that receive public assistance income (general assistance and Temporary Assistance to Needy Families)." 
+There are two main categories of public assistance programs, social welfare programs and social insurance programs.  Social welfare programs generally have low income criteria for eligibility, and include programs such as Supplemental Security Income (SSI), Supplemental Nutrition Assistance Program (SNAP), Special Supplemental Nutrition Program for Women, Infants, and Children (WIC) Temporary Assistance for Needy Families (TANF), and General Assistance (GA).
+Social insurance programs, meanwhile, are based on criteria outside income, such as age, employment status, or being a veteran. These include Social security (self and on behalf of a dependent child), Department of Veterans' Affairs benefits (except Veteran's pension), Unemployment insurance compensation, and Workers' compensation. 
+
+<div style = "overflow-y: auto; height: 650px; width = 500px;">
+
+
+```{r}
+
+# distribution of percentage receiving public assistance income in block groups in the U.S.
+blockgroup_level_data %>%
+  mutate(
+         Mean = mean(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_PUB_ASST_INC_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = "Distribution of the Percentage Receiving Public Assistance Income\nin Block Groups in the U.S.") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+# distribution of percentage receiving public assistance income in block groups where facilities are located 
+prison_boundaries_block_census %>%
+  mutate(
+         Mean = mean(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_PUB_ASST_INC_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = "Distribution of the Percentage Receiving Public Assistance Income\nin Block Groups Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+# distribution of percentage receiving public assistance income in block groups where facilities are located
+# faceted by facility type 
+prison_boundaries_block_census %>% 
+  group_by(TYPE) %>% 
+  mutate(
+         Mean = mean(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
+         TYPE = factor(TYPE,  levels = c("LOCAL", "COUNTY",
+                                        "STATE", "FEDERAL",
+                                        "MULTI", "NOT AVAILABLE"))) %>% 
+  ggplot(aes(x = pct_PUB_ASST_INC_ACS_15_19)) +
+  geom_histogram(alpha = .9, bins = 40) + facet_wrap(~TYPE, scales = "free_y") +
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = "Distribution of the Percentage Receiving Public Assistance Income\nin Block Groups Where Facilities are Located\nFaceted by Facility Type") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 10), limits = c(-3,105))
+
+
+# distribution of percentage receiving public assistance income in block groups where facilities are located
+# faceted by security level 
+prison_boundaries_block_census %>% 
+  group_by(SECURELVL) %>% 
+  mutate(
+         Mean = mean(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
+         SECURELVL = factor(SECURELVL,  levels = c("JUVENILE", "MINIMUM",
+                                        "MEDIUM", "MAXIMUM",
+                                        "CLOSE", "NOT AVAILABLE"))) %>% 
+  ggplot(aes(x = pct_PUB_ASST_INC_ACS_15_19)) +
+  geom_histogram(alpha = .9, bins = 40) + 
+  facet_wrap(~SECURELVL, scales = "free_y") +
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = "Distribution of the Percentage Receiving Public Assistance Income\nin Block Groups Where Facilities are Located\nFaceted by Security Level") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 10), limits = c(-3,105))
+
+
+
+
+```
+
+</div> 
+
+
+## Distribution of Percentage Where No Adult Speaks English "Very Well"
+
+> ```pct_ENG_VW_ACS_15_19``` is defined as the "percentage of all ACS occupied housing units where no one ages 14 years and over speaks English only or speaks English 'very well'". 
+
+
+
+
+```{r}
+
+# distribution across the U.S.
+blockgroup_level_data %>%
+  mutate(
+         Mean = mean(pct_ENG_VW_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_ENG_VW_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_ENG_VW_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage Where No One Over 14 in the Household Speaks English "Very Well"\nin Block Groups in the U.S.') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+#distribution in block groups where facilities are located 
+prison_boundaries_block_census %>%
+  mutate(
+         Mean = mean(pct_ENG_VW_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_ENG_VW_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_ENG_VW_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage Where No One Over 14 in the Household Speaks English "Very Well" \nin Block Groups Where Facilities are Located') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+```
+
 
 ```{r, eval= FALSE}
 
@@ -1168,25 +1327,123 @@ get_census_data_tract <- function(state_code) {
 # Med_HHD_Inc_ACS_15_19_1
 # Med_House_Value_ACS_15_19  
 
-# get tract level data for all states 
-tract_level_data <- map_dfr(state_codes,  ~get_census_data_tract(.x))
+# get tract level data for all states, only run this section if changing the variables from function above
+#tract_level_data <- map_dfr(state_codes,  ~get_census_data_tract(.x))
+#write_csv(tract_level_data, "./tract_level_data.csv")
 
-state_code = "01"
-region_for_state = paste0("state:", state_code, "+county:*")
+tract_level_data <- read_csv("./tract_level_data.csv")
 
- t <- getCensus(name = "pdb/tract",
-                      vintage = 2021,
-                      key = "fbbc8b0d3e53089da7cabc380628d6d46ae00444",
-                      vars = c( 
-                               "pct_Pop_NoCompDevic_ACS_15_19",
-                               "pct_Pop_w_BroadComp_ACS_15_19",
-                               "pct_Civ_unemp_16p_ACS_15_19"
-                               ),
-                      regionin = region_for_state,
-                      region = "tract:*")
+prison_tract <- left_join(prison_boundaries_blocks, tract_level_data,
+                                            by = c("STATEFP10" = "state",
+                                                   "COUNTYFP10" = "county",
+                                                   "TRACTCE10" = "tract"))
+
+
 
 ```
 
+
+## Distribution of Percentages Lacking a Computing Device
+
+The tract level data has additional variables available, and separate [documentation](https://www2.census.gov/adrm/PDB/2021/2021_Tract_PDB_Documentation.pdf) outlining the definitions. 
+
+> The variable ```pct_Pop_NoCompDevic_ACS_15_19``` is defined as the "Percentage of people that live in households that do not have computing device of any kind in the ACS".
+
+
+
+```{r}
+
+# across U.S.
+tract_level_data %>% 
+  mutate(
+         Mean = mean(pct_Pop_NoCompDevic_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Pop_NoCompDevic_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Pop_NoCompDevic_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Tracts", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage of the Population Without a Computing Device\nin Tracts in the U.S.') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+# for tracts where facilities are located 
+prison_tract %>% 
+  mutate(
+         Mean = mean(pct_Pop_NoCompDevic_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Pop_NoCompDevic_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Pop_NoCompDevic_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage of the Population Without a Computing Device\nin Tracts Where Facilities are Located') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+  
+
+
+```
+
+## Distribution of Percentages With Access to Broadband Wifi
+
+> The variable ```pct_Pop_w_BroadComp_ACS_15_19``` is defined as the "Percentage of people that live in households that have both broadband Internet access and a computing device of any kind in the ACS". 
+
+```{r}
+
+
+# across the U.S.
+tract_level_data %>% 
+  mutate(
+         Mean = mean(pct_Pop_w_BroadComp_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Pop_w_BroadComp_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Pop_w_BroadComp_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Tracts", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage of the Population With Broadband Internet Access\nin Tracts in the U.S.') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+# for block groups where facilities are lcoated 
+prison_tract %>% 
+  mutate(
+         Mean = mean(pct_Pop_w_BroadComp_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Pop_w_BroadComp_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Pop_w_BroadComp_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage of the Population With Broadband Internet Access\nin Tracts Where Facilities are Located') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+```
 
 
 
