@@ -66,6 +66,13 @@ state_codes <- state_county_list_filtered %>%
   pull(STATEFIPS)
 
 
+
+```
+
+# Analysis at the Block Group Level
+
+```{r}
+
 # can use this function to see what variables are available for the given dataset
 # listCensusMetadata(name = "pdb/blockgroup", vintage = 2021, type = "variables", group = NULL)
 
@@ -149,7 +156,6 @@ all_vars <- prison_boundaries_block_census %>% colnames()
 
 
 ```
-
 
 
 Variable definitions are from the documentation for the [2021 Planning Database](https://www2.census.gov/adrm/PDB/2021/2021_Block_Group_PDB_Documentation.pdf).  
@@ -393,8 +399,8 @@ prison_boundaries_block_census %>%
 #### FOR COMPARISON -- distribution of percentage rural across the U.S.
 
 blockgroup_level_data %>% 
-  mutate(Median = median(pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE),
-         Mean = mean(pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE)) %>%
+  mutate(Median = median(pct_RURAL_POP_CEN_2010, na.rm = TRUE),
+         Mean = mean(pct_RURAL_POP_CEN_2010, na.rm = TRUE)) %>%
   select(pct_RURAL_POP_CEN_2010, Median, Mean) %>% 
   ggplot(aes(x = pct_RURAL_POP_CEN_2010 )) + 
   geom_histogram() +
@@ -417,8 +423,8 @@ blockgroup_level_data %>%
 
 # distribution of percentage rural 
 prison_boundaries_block_census %>% 
-  mutate(Median = median(pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE),
-         Mean = mean(pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE)) %>%
+  mutate(Median = median(pct_RURAL_POP_CEN_2010, na.rm = TRUE),
+         Mean = mean(pct_RURAL_POP_CEN_2010, na.rm = TRUE)) %>%
   select(pct_RURAL_POP_CEN_2010, Median, Mean) %>% 
   ggplot(aes(x = pct_RURAL_POP_CEN_2010 )) + 
   geom_histogram() +
@@ -601,9 +607,9 @@ prison_boundaries_block_census %>%
 
 ## Distribution of Racial Percentages for each Racial Category
 
-<div style = "overflow-y: auto; height: 650px; width = 500px;">
+<div style = "overflow-y: auto; height: 800px; width = 500px;">
 
-```{r}
+```{r, fig.height = 8, fig.width = 8}
 # prison_blocks_race
 
 # 
@@ -688,7 +694,7 @@ prison_race %>%
 <div style = "overflow-y: auto; height: 650px; width = 500px;">
 
 
-```{r}
+```{r, fig.height = 8, fig.width = 8}
 
 blockgroup_level_data %>%
   mutate(pct_no_insurance = (No_Health_Ins_ACS_15_19 / Tot_Population_ACS_15_19) * 100,
@@ -777,7 +783,7 @@ To calculate the percentage, we can use the ``` Pov_Univ_ACS_15_19``` variable, 
 <div style = "overflow-y: auto; height: 650px; width = 500px;">
 
 
-```{r}
+```{r, fig.height = 8, fig.width = 8}
 
 #### FOR COMPARISON -- poverty distribution for all block groups in the U.S.
 blockgroup_level_data %>%
@@ -876,7 +882,7 @@ prison_boundaries_block_census %>%
 
 <div style = "overflow-y: auto; height: 650px; width = 500px;">
 
-```{r}
+```{r, fig.height = 8, fig.width = 8}
 
 # distribution of percentage of housing units rented 
 blockgroup_level_data %>%
@@ -1030,10 +1036,10 @@ prison_boundaries_block_census %>%
 
 > ```pct_Inst_GQ_CEN_2010``` is defined as "The percentage of the 2010 Census population who live in group quarters and are primarily ineligible, unable, or unlikely to participate in labor force while residents. Institutional group quarters include correctional facilities for adults, juvenile facilities, nursing facilities, and other institutional facilities."
 
-<div style = "overflow-y: auto; height: 650px; width = 500px;">
+<div style = "overflow-y: auto; height: 800px; width = 500px;">
 
 
-```{r}
+```{r, fig.height = 8, fig.width = 8}
 
 # distribution of the Percentage Living in Institutional Group Quarters across all block groups in the U.S. 
 blockgroup_level_data %>%
@@ -1142,10 +1148,10 @@ prison_boundaries_block_census %>%
 There are two main categories of public assistance programs, social welfare programs and social insurance programs.  Social welfare programs generally have low income criteria for eligibility, and include programs such as Supplemental Security Income (SSI), Supplemental Nutrition Assistance Program (SNAP), Special Supplemental Nutrition Program for Women, Infants, and Children (WIC) Temporary Assistance for Needy Families (TANF), and General Assistance (GA).
 Social insurance programs, meanwhile, are based on criteria outside income, such as age, employment status, or being a veteran. These include Social security (self and on behalf of a dependent child), Department of Veterans' Affairs benefits (except Veteran's pension), Unemployment insurance compensation, and Workers' compensation. 
 
-<div style = "overflow-y: auto; height: 650px; width = 500px;">
+<div style = "overflow-y: auto; height: 800px; width = 500px;">
 
 
-```{r}
+```{r, fig.height = 8, fig.width = 8}
 
 # distribution of percentage receiving public assistance income in block groups in the U.S.
 blockgroup_level_data %>%
@@ -1250,9 +1256,10 @@ prison_boundaries_block_census %>%
 > ```pct_ENG_VW_ACS_15_19``` is defined as the "percentage of all ACS occupied housing units where no one ages 14 years and over speaks English only or speaks English 'very well'". 
 
 
+<div style = "overflow-y: auto; height: 650px; width = 500px;">
 
 
-```{r}
+```{r, fig.height = 8, fig.width = 8}
 
 # distribution across the U.S.
 blockgroup_level_data %>%
@@ -1296,7 +1303,14 @@ prison_boundaries_block_census %>%
 ```
 
 
-```{r, eval= FALSE}
+</div>
+
+# Tract Level Analysis
+
+Some variables are not available at the block group level, but still may be relevant. These include the percentage of the population lacking a computing device, the percentage of the popoulation with broadband internet access and a computing device, and the percentage of the population 16 years and older who are unemployed. 
+
+
+```{r}
 
 get_census_data_tract <- function(state_code) {
   region_for_state = paste0("state:", state_code, "+county:*")
@@ -1343,15 +1357,18 @@ prison_tract <- left_join(prison_boundaries_blocks, tract_level_data,
 ```
 
 
+
 ## Distribution of Percentages Lacking a Computing Device
 
 The tract level data has additional variables available, and separate [documentation](https://www2.census.gov/adrm/PDB/2021/2021_Tract_PDB_Documentation.pdf) outlining the definitions. 
 
 > The variable ```pct_Pop_NoCompDevic_ACS_15_19``` is defined as the "Percentage of people that live in households that do not have computing device of any kind in the ACS".
 
+<div style = "overflow-y: auto; height: 800px; width = 500px;">
 
 
-```{r}
+
+```{r, fig.height = 8, fig.width = 8}
 
 # across U.S.
 tract_level_data %>% 
@@ -1396,11 +1413,21 @@ prison_tract %>%
 
 ```
 
+
+</div>
+
+
 ## Distribution of Percentages With Access to Broadband Wifi
 
 > The variable ```pct_Pop_w_BroadComp_ACS_15_19``` is defined as the "Percentage of people that live in households that have both broadband Internet access and a computing device of any kind in the ACS". 
 
-```{r}
+The thresholds for upload and download speeds are set by the [Federal Communications Commission](https://www.fcc.gov/consumers/guides/broadband-speed-guide), and have [changed over time](https://broadbandnow.com/report/fcc-broadband-definition/), shaping our view on the digital divides that exist. 
+
+
+<div style = "overflow-y: auto; height: 800px; width = 500px;">
+
+
+```{r, fig.height = 8, fig.width = 8}
 
 
 # across the U.S.
@@ -1423,7 +1450,7 @@ tract_level_data %>%
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
 
 
-# for block groups where facilities are lcoated 
+# for tracts where facilities are lcoated 
 prison_tract %>% 
   mutate(
          Mean = mean(pct_Pop_w_BroadComp_ACS_15_19, na.rm = TRUE),
@@ -1445,7 +1472,66 @@ prison_tract %>%
 
 ```
 
+</div> 
 
 
+## Distribution of the Percentage Unemployed
+
+> The variable ```pct_Civ_unemp_16p_ACS_15_19``` is defined as the "percentage of ACS civilians ages 16 years and over in
+the labor force that are unemployed". 
+
+<div style = "overflow-y: auto; height: 800px; width = 500px;">
+
+
+```{r, fig.height = 8, fig.width = 8}
+
+
+# across the U.S.
+tract_level_data %>% 
+  mutate(
+         Mean = mean(pct_Civ_unemp_16p_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Civ_unemp_16p_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Civ_unemp_16p_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Tracts", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage of Civilians Ages 16+ in the Labor Force Who are Unemployed\nin Tracts in the U.S.') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+
+
+# in tracts where facilities are located
+prison_tract %>% 
+  mutate(
+         Mean = mean(pct_Civ_unemp_16p_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Civ_unemp_16p_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Civ_unemp_16p_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage of Civilians Ages 16+ in the Labor Force Who are Unemployed\nin Tracts Where Facilities are Located') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+
+
+```
+
+</div>
 
 
