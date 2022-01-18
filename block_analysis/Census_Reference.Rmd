@@ -1,0 +1,81 @@
+---
+title: "<span style = 'color: #610202; text-shadow:.5px .5px .5px black; font-weight: bold; '> • Census Data Reference Sheet •</span>"
+date: "1/18/2022"
+output: 
+  rmdformats::readthedown:
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+
+<style type="text/css">
+/* style information here: https://stackoverflow.com/questions/25646333/code-chunk-font-size-in-rmarkdown-with-knitr-and-latex */
+
+body, td {
+   font-size: 12px;
+}
+code.r {
+/* this controls font size for code echoed from the chunk */
+  font-size: 12px;
+}
+pre {
+ /* this controls font size in the chunk */
+  font-size: 10px
+}
+</style>
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<br><br><br>
+
+# Accessing Census Data Through R 
+
+There are multiple packages available for accessing census data. One is ```censusapi```, which you can learn about through the introductory vignette [here](https://cran.r-project.org/web/packages/censusapi/vignettes/getting-started.html) or through the documentation [here](https://cran.r-project.org/web/packages/censusapi/censusapi.pdf). If you want to obtain data for the entire U.S., it may be necessary to use the iterative capabilities of the [```purrr``` package](https://cran.r-project.org/web/packages/purrr/purrr.pdf).  To decide which data set you wish to use here, the full list of those available through the census API is [here](https://api.census.gov/data.html). 
+
+For example, the following code iterates over every state FIPS code in the U.S., extracting the variables ```pct_Pop_NoCompDevic_ACS_15_19```, ```pct_Pop_w_BroadComp_ACS_15_19```, ```pct_Civ_unemp_16p_ACS_15_19``` at the tract level, and returning a data frame with each row representing a specific tract.
+
+
+
+
+<div style = "font-size:1vw;">
+
+```{r, eval = FALSE}
+
+get_census_data_tract <- function(state_code) {
+  region_for_state = paste0("state:", state_code, "+county:*")
+  result <- tryCatch( 
+    {
+    getCensus(name = "pdb/tract",
+                      vintage = 2021,
+                      key = "fbbc8b0d3e53089da7cabc380628d6d46ae00444",
+                      vars = c( 
+                               "pct_Pop_NoCompDevic_ACS_15_19",
+                               "pct_Pop_w_BroadComp_ACS_15_19",
+                               "pct_Civ_unemp_16p_ACS_15_19"
+                               ),
+                      regionin = region_for_state,
+                      region = "tract:*")
+          } ,
+      error=function(e) {
+            return()
+        } 
+      )
+  return(result)
+}
+
+
+# get tract level data for all states
+# state_codes is a vector containing all FIPS codes for states in the U.S.
+tract_level_data <- map_dfr(state_codes,  ~get_census_data_tract(.x))
+
+```
+ </div>
+
+```{r}
+
+```
+
