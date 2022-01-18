@@ -34,7 +34,7 @@ prison_boundaries <- st_read("./1075f3ca-0050-4264-82e2-079a2daf2ec5.gdb", quiet
 
 
 # read results that contain block assignment for each facility saved in csv
-prison_boundaries_blocks <- read_csv("./prison_blocks.csv")
+prison_boundaries_blocks <- read_csv("./data/prison_blocks.csv")
 
 # for prison boundaries file, get list of all state county combinations represented, including the
 # codes for the corresponding states and counties
@@ -135,9 +135,9 @@ get_census_data_safe <- function(state_code) {
 # blockgroup_level_data <- blockgroup_level_data %>% 
 #  select(-Block_group, County)
 
-# write_csv(blockgroup_level_data, "./blockgroup_level_data.csv")
+# write_csv(blockgroup_level_data, "./data/blockgroup_level_data.csv")
 
-blockgroup_level_data <- read_csv("./blockgroup_level_data.csv")
+blockgroup_level_data <- read_csv("./data/blockgroup_level_data.csv")
 
 # get block group number, which is the first digit of the block number 
 prison_boundaries_blocks <- prison_boundaries_blocks %>% 
@@ -616,7 +616,7 @@ prison_boundaries_block_census %>%
 #  mutate(sum_all = Hispanic_ACS_15_19 + NH_AIAN_alone_ACS_15_19 + NH_Asian_alone_ACS_15_19 + NH_Blk_alone_ACS_15_19 + NH_NHOPI_alone_ACS_15_19 + NH_SOR_alone_ACS_15_19 + NH_White_alone_ACS_15_19) %>% View()
 
 # for race reference csv, copied and pasted definitions at link here https://api.census.gov/data/2021/pdb/blockgroup/variables.html into excel file 
-race_ref <- read_csv("./races_reference.csv", col_names = FALSE) %>% 
+race_ref <- read_csv("./data/races_reference.csv", col_names = FALSE) %>% 
   select(X1, X2) %>% 
   rename(`Racial Category` = X1,
          Description = X2) %>%
@@ -1343,9 +1343,9 @@ get_census_data_tract <- function(state_code) {
 
 # get tract level data for all states, only run this section if changing the variables from function above
 #tract_level_data <- map_dfr(state_codes,  ~get_census_data_tract(.x))
-#write_csv(tract_level_data, "./tract_level_data.csv")
+#write_csv(tract_level_data, "./data/tract_level_data.csv")
 
-tract_level_data <- read_csv("./tract_level_data.csv")
+tract_level_data <- read_csv("./data/tract_level_data.csv")
 
 prison_tract <- left_join(prison_boundaries_blocks, tract_level_data,
                                             by = c("STATEFP10" = "state",

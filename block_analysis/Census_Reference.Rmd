@@ -30,18 +30,15 @@ pre {
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-<br><br><br>
+<br>
 
 # Accessing Census Data Through R 
 
 There are multiple packages available for accessing census data. One is ```censusapi```, which you can learn about through the introductory vignette [here](https://cran.r-project.org/web/packages/censusapi/vignettes/getting-started.html) or through the documentation [here](https://cran.r-project.org/web/packages/censusapi/censusapi.pdf). If you want to obtain data for the entire U.S., it may be necessary to use the iterative capabilities of the [```purrr``` package](https://cran.r-project.org/web/packages/purrr/purrr.pdf).  To decide which data set you wish to use here, the full list of those available through the census API is [here](https://api.census.gov/data.html). 
 
-For example, the following code iterates over every state FIPS code in the U.S., extracting the variables ```pct_Pop_NoCompDevic_ACS_15_19```, ```pct_Pop_w_BroadComp_ACS_15_19```, ```pct_Civ_unemp_16p_ACS_15_19``` at the tract level, and returning a data frame with each row representing a specific tract.
+For example, the following code iterates over every state FIPS code in the U.S., extracts the variables ```pct_Pop_NoCompDevic_ACS_15_19```, ```pct_Pop_w_BroadComp_ACS_15_19```, ```pct_Civ_unemp_16p_ACS_15_19``` at the tract level, and returns a data frame with each row representing a specific tract.
 
 
-
-
-<div style = "font-size:1vw;">
 
 ```{r, eval = FALSE}
 
@@ -73,7 +70,6 @@ get_census_data_tract <- function(state_code) {
 tract_level_data <- map_dfr(state_codes,  ~get_census_data_tract(.x))
 
 ```
- </div>
 
 ```{r}
 

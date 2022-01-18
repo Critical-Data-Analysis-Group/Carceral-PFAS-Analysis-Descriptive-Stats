@@ -2916,12 +2916,11 @@ pre {
   font-size: 10px
 }
 </style>
-<p><br><br><br></p>
+<p><br></p>
 <div id="accessing-census-data-through-r" class="section level1">
 <h1>Accessing Census Data Through R</h1>
 <p>There are multiple packages available for accessing census data. One is <code>censusapi</code>, which you can learn about through the introductory vignette <a href="https://cran.r-project.org/web/packages/censusapi/vignettes/getting-started.html">here</a> or through the documentation <a href="https://cran.r-project.org/web/packages/censusapi/censusapi.pdf">here</a>. If you want to obtain data for the entire U.S., it may be necessary to use the iterative capabilities of the <a href="https://cran.r-project.org/web/packages/purrr/purrr.pdf"><code>purrr</code> package</a>. To decide which data set you wish to use here, the full list of those available through the census API is <a href="https://api.census.gov/data.html">here</a>.</p>
-<p>For example, the following code iterates over every state FIPS code in the U.S., extracting the variables <code>pct_Pop_NoCompDevic_ACS_15_19</code>, <code>pct_Pop_w_BroadComp_ACS_15_19</code>, <code>pct_Civ_unemp_16p_ACS_15_19</code> at the tract level, and returning a data frame with each row representing a specific tract.</p>
-<div style="font-size:1vw;">
+<p>For example, the following code iterates over every state FIPS code in the U.S., extracts the variables <code>pct_Pop_NoCompDevic_ACS_15_19</code>, <code>pct_Pop_w_BroadComp_ACS_15_19</code>, <code>pct_Civ_unemp_16p_ACS_15_19</code> at the tract level, and returns a data frame with each row representing a specific tract.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">get_census_data_tract &lt;-<span class="st"> </span><span class="cf">function</span>(state_code) {</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2">  region_for_state =<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;state:&quot;</span>, state_code, <span class="st">&quot;+county:*&quot;</span>)</a>
 <a class="sourceLine" id="cb1-3" data-line-number="3">  result &lt;-<span class="st"> </span><span class="kw">tryCatch</span>( </a>
@@ -2948,7 +2947,6 @@ pre {
 <a class="sourceLine" id="cb1-24" data-line-number="24"><span class="co"># get tract level data for all states</span></a>
 <a class="sourceLine" id="cb1-25" data-line-number="25"><span class="co"># state_codes is a vector containing all FIPS codes for states in the U.S.</span></a>
 <a class="sourceLine" id="cb1-26" data-line-number="26">tract_level_data &lt;-<span class="st"> </span><span class="kw">map_dfr</span>(state_codes,  <span class="op">~</span><span class="kw">get_census_data_tract</span>(.x))</a></code></pre></div>
-</div>
 </div>
 </div>
 
