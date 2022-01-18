@@ -1,5 +1,5 @@
 ---
-title: "Exploratory Block Group Analysis"
+title: "Exploratory Analysis of Demographic Characteristics Where Facilities are Located"
 author: "Quinn White"
 output: 
   rmdformats::readthedown:
@@ -102,14 +102,15 @@ get_census_data_safe <- function(state_code) {
                                "Tot_Prns_in_HHD_ACS_15_19",
                                "Renter_Occp_HU_ACS_15_19",
                                "Med_House_Value_BG_ACS_15_19",
-                               "pct_ENG_VW_ACSMOE_15_19",
+                               "pct_ENG_VW_ACS_15_19",
                                "pct_URBANIZED_AREA_POP_CEN_2010",
                                "pct_RURAL_POP_CEN_2010",
                                "pct_Inst_GQ_CEN_2010",
                                "pct_Inst_GQ_CEN_2010",
                                "pct_Non_Inst_GQ_CEN_2010",
                                "pct_Non_Inst_GQ_CEN_2010",
-                               "pct_URBAN_CLUSTER_POP_CEN_2010"
+                               "pct_URBAN_CLUSTER_POP_CEN_2010",
+                               "pct_PUB_ASST_INC_ACS_15_19"
                                ),
                       regionin = region_for_state,
                       region = "block group:*")
@@ -121,12 +122,57 @@ get_census_data_safe <- function(state_code) {
   return(result)
 }
 
+region_for_state = paste0("state:", "01", "+county:*+tract:*")
+
+t <- getCensus(name = "pdb/blockgroup",
+                      vintage = 2021,
+                      key = "fbbc8b0d3e53089da7cabc380628d6d46ae00444",
+                      vars = c("Block_group",
+                               "County", 
+                               "URBANIZED_AREA_POP_CEN_2010",
+                               "Tot_Population_CEN_2010", 
+                               "Tot_Population_ACS_15_19", 
+                               "Males_ACS_15_19", 
+                               "Females_ACS_15_19",
+                               "Median_Age_ACS_15_19", 
+                               "Hispanic_ACS_15_19",
+                               "NH_White_alone_ACS_15_19",
+                               "NH_Blk_alone_ACS_15_19",
+                               "NH_AIAN_alone_ACS_15_19",
+                               "NH_Asian_alone_ACS_15_19",
+                               "NH_NHOPI_alone_ACS_15_19", 
+                               "NH_SOR_alone_ACS_15_19",
+                               "Pov_Univ_ACS_15_19",
+                               "Prs_Blw_Pov_Lev_ACS_15_19",
+                               "No_Health_Ins_ACS_15_19",
+                               "Tot_Occp_Units_ACS_15_19",
+                               "Aggregate_HH_INC_ACS_15_19",
+                               "Med_HHD_Inc_BG_ACS_15_19",
+                               "Tot_Prns_in_HHD_ACS_15_19",
+                               "Renter_Occp_HU_ACS_15_19",
+                               "Med_House_Value_BG_ACS_15_19",
+                               "pct_ENG_VW_ACS_15_19",
+                               "pct_URBANIZED_AREA_POP_CEN_2010",
+                               "pct_RURAL_POP_CEN_2010",
+                               "pct_Inst_GQ_CEN_2010",
+                               "pct_Inst_GQ_CEN_2010",
+                               "pct_Non_Inst_GQ_CEN_2010",
+                               "pct_Non_Inst_GQ_CEN_2010",
+                               "pct_URBAN_CLUSTER_POP_CEN_2010",
+                               "pct_PUB_ASST_INC_ACS_15_19",
+                               "pct_Pop_NoCompDevic_ACS_15_19",
+                               "pct_Pop_w_BroadComp_ACS_15_19"
+                               ),
+                      regionin = region_for_state,
+                      region = "block group:*")
+
+
 # get block group level data for every state in state_codes - only run when making changes to the variables included in the function above
-# blockgroup_level_data <- map_dfr(state_codes,  ~get_census_data_safe(.x))
+blockgroup_level_data <- map_dfr(state_codes,  ~get_census_data_safe(.x))
 
 # remove of redundant columns
-#blockgroup_level_data <- blockgroup_level_data %>% 
-#  select(-Block_group, County)
+blockgroup_level_data <- blockgroup_level_data %>% 
+  select(-Block_group, County)
 
 # write_csv(blockgroup_level_data, "./blockgroup_level_data.csv")
 
@@ -180,7 +226,7 @@ blockgroup_level_data %>%
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) +
-  scale_x_continuous(breaks = seq(0, 100, by = 10))
+  scale_x_continuous(breaks = seq(0, 100, by = 10), limits = c(0, 100))
 
 
 
@@ -203,7 +249,7 @@ prison_boundaries_block_census %>%
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) +
-  scale_x_continuous(breaks = seq(0, 100, by = 10))
+  scale_x_continuous(breaks = seq(0, 100, by = 10), limits = c(0,100))
 
 
 ###### distribution of median age by facility
@@ -775,6 +821,9 @@ poverty level given their total family or household income within the last year,
 
 To calculate the percentage, we can use the ``` Pov_Univ_ACS_15_19``` variable, which is defined as the "Population for whom poverty level is determined". 
 
+<div style = "overflow-y: auto; height: 650px; width = 500px;">
+
+
 ```{r}
 
 #### FOR COMPARISON -- poverty distribution for all block groups in the U.S.
@@ -866,11 +915,13 @@ prison_boundaries_block_census %>%
 
 ```
 
+</div> 
 
 ## Distribution of the Percentage of Housing Units Rented 
 
 ```Renter_Occp_HU_ACS_15_19``` is defined as "Number of ACS occupied housing units that are not owner occupied, whether they are rented or occupied without payment of rent".
 
+<div style = "overflow-y: auto; height: 650px; width = 500px;">
 
 ```{r}
 
@@ -965,6 +1016,7 @@ prison_boundaries_block_census %>%
 
 ```
 
+</div>
 
 ## Distribution of Average Household Size 
 
@@ -972,6 +1024,7 @@ prison_boundaries_block_census %>%
 ```Med_House_Value_BG_ACS_15_19``` is defined as the "Median of ACS respondents' house value
 estimates per block group".
 
+<div style = "overflow-y: auto; height: 650px; width = 500px;">
 
 ```{r}
 
@@ -1018,11 +1071,60 @@ prison_boundaries_block_census %>%
 
 ```
 
+</div> 
 
 
-## Distribution of Average Household Size 
 
 
+```{r}
+
+get_census_data_tract <- function(state_code) {
+  region_for_state = paste0("state:", state_code, "+county:*")
+  result <- tryCatch( 
+    {
+    getCensus(name = "pdb/tract",
+                      vintage = 2021,
+                      key = "fbbc8b0d3e53089da7cabc380628d6d46ae00444",
+                      vars = c( 
+                               "pct_Pop_NoCompDevic_ACS_15_19",
+                               "pct_Pop_w_BroadComp_ACS_15_19",
+                               "pct_Civ_unemp_16p_ACS_15_19"
+                               ),
+                      regionin = region_for_state,
+                      region = "tract:*")
+          } ,
+      error=function(e) {
+            return()
+        } 
+      )
+  return(result)
+}
+
+### NOTE -- attempted trying to get the following variables as well, but they just returned NAs
+# Aggregate_HH_INC_ACS_15_19
+# Med_HHD_Inc_ACS_15_19
+# avg_Agg_HH_INC_ACS_15_19     
+# Med_HHD_Inc_ACS_15_19_1
+# Med_House_Value_ACS_15_19  
+
+# get tract level data for all states 
+tract_level_data <- map_dfr(state_codes,  ~get_census_data_tract(.x))
+
+state_code = "01"
+region_for_state = paste0("state:", state_code, "+county:*")
+
+ t <- getCensus(name = "pdb/tract",
+                      vintage = 2021,
+                      key = "fbbc8b0d3e53089da7cabc380628d6d46ae00444",
+                      vars = c( 
+                               "pct_Pop_NoCompDevic_ACS_15_19",
+                               "pct_Pop_w_BroadComp_ACS_15_19",
+                               "pct_Civ_unemp_16p_ACS_15_19"
+                               ),
+                      regionin = region_for_state,
+                      region = "tract:*")
+
+```
 
 
 
