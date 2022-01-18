@@ -106,8 +106,6 @@ get_census_data_safe <- function(state_code) {
                                "pct_URBANIZED_AREA_POP_CEN_2010",
                                "pct_RURAL_POP_CEN_2010",
                                "pct_Inst_GQ_CEN_2010",
-                               "pct_Inst_GQ_CEN_2010",
-                               "pct_Non_Inst_GQ_CEN_2010",
                                "pct_Non_Inst_GQ_CEN_2010",
                                "pct_URBAN_CLUSTER_POP_CEN_2010",
                                "pct_PUB_ASST_INC_ACS_15_19"
@@ -122,57 +120,13 @@ get_census_data_safe <- function(state_code) {
   return(result)
 }
 
-region_for_state = paste0("state:", "01", "+county:*+tract:*")
-
-t <- getCensus(name = "pdb/blockgroup",
-                      vintage = 2021,
-                      key = "fbbc8b0d3e53089da7cabc380628d6d46ae00444",
-                      vars = c("Block_group",
-                               "County", 
-                               "URBANIZED_AREA_POP_CEN_2010",
-                               "Tot_Population_CEN_2010", 
-                               "Tot_Population_ACS_15_19", 
-                               "Males_ACS_15_19", 
-                               "Females_ACS_15_19",
-                               "Median_Age_ACS_15_19", 
-                               "Hispanic_ACS_15_19",
-                               "NH_White_alone_ACS_15_19",
-                               "NH_Blk_alone_ACS_15_19",
-                               "NH_AIAN_alone_ACS_15_19",
-                               "NH_Asian_alone_ACS_15_19",
-                               "NH_NHOPI_alone_ACS_15_19", 
-                               "NH_SOR_alone_ACS_15_19",
-                               "Pov_Univ_ACS_15_19",
-                               "Prs_Blw_Pov_Lev_ACS_15_19",
-                               "No_Health_Ins_ACS_15_19",
-                               "Tot_Occp_Units_ACS_15_19",
-                               "Aggregate_HH_INC_ACS_15_19",
-                               "Med_HHD_Inc_BG_ACS_15_19",
-                               "Tot_Prns_in_HHD_ACS_15_19",
-                               "Renter_Occp_HU_ACS_15_19",
-                               "Med_House_Value_BG_ACS_15_19",
-                               "pct_ENG_VW_ACS_15_19",
-                               "pct_URBANIZED_AREA_POP_CEN_2010",
-                               "pct_RURAL_POP_CEN_2010",
-                               "pct_Inst_GQ_CEN_2010",
-                               "pct_Inst_GQ_CEN_2010",
-                               "pct_Non_Inst_GQ_CEN_2010",
-                               "pct_Non_Inst_GQ_CEN_2010",
-                               "pct_URBAN_CLUSTER_POP_CEN_2010",
-                               "pct_PUB_ASST_INC_ACS_15_19",
-                               "pct_Pop_NoCompDevic_ACS_15_19",
-                               "pct_Pop_w_BroadComp_ACS_15_19"
-                               ),
-                      regionin = region_for_state,
-                      region = "block group:*")
-
 
 # get block group level data for every state in state_codes - only run when making changes to the variables included in the function above
-blockgroup_level_data <- map_dfr(state_codes,  ~get_census_data_safe(.x))
+# blockgroup_level_data <- map_dfr(state_codes,  ~get_census_data_safe(.x))
 
 # remove of redundant columns
-blockgroup_level_data <- blockgroup_level_data %>% 
-  select(-Block_group, County)
+# blockgroup_level_data <- blockgroup_level_data %>% 
+#  select(-Block_group, County)
 
 # write_csv(blockgroup_level_data, "./blockgroup_level_data.csv")
 
@@ -373,10 +327,10 @@ prison_boundaries_block_census %>%
 
 ## Distribution of the Percentage Urbanized
 
-As defined in the documentation, the variable definitions are as follows:   
-* ```pct_URBANIZED_AREA_POP_CEN_2010```: "percentage of the 2010 Census total population that lives in a densely settled area containing 50,000 or more people"  
-* ```pct_URBAN_CLUSTER_POP_CEN_2010```: "percentage of the 2010 Census total population that lives in a densely settled area containing 2,500 to 49,999 people"
-* ```pct_RURAL_POP_CEN_2010```: "percentage of the 2010 Census total population that lives outside of an urbanized area or urban cluster"
+> As defined in the [documentation](https://www2.census.gov/adrm/PDB/2021/2021_Block_Group_PDB_Documentation.pdf), the variable definitions are as follows:     
+*  ```pct_URBANIZED_AREA_POP_CEN_2010```: "percentage of the 2010 Census total population that lives in a densely settled area containing 50,000 or more people"    
+*  ```pct_URBAN_CLUSTER_POP_CEN_2010```: "percentage of the 2010 Census total population that lives in a densely settled area containing 2,500 to 49,999 people"  
+*  ```pct_RURAL_POP_CEN_2010```: "percentage of the 2010 Census total population that lives outside of an urbanized area or urban cluster"  
 
 <div style = "overflow-y: auto; height: 600px; width = 500px;">
 
@@ -686,7 +640,7 @@ blockgroup_level_data %>%
   theme_bw() + 
   labs(y = "Number of Block Groups", 
        x = "Percentage",
-       subtitle = "Median in Red, Median in Blue\n2015 – 2019 5-year ACS sample data",
+       subtitle = "Median in Red, Mean in Blue\n2015 – 2019 5-year ACS sample data",
        title = "Distribution of Racial Percentages in Block Groups in the U.S.") +
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
@@ -816,9 +770,8 @@ prison_boundaries_block_census %>%
 
 Referencing the [documentation](https://www2.census.gov/adrm/PDB/2021/2021_Block_Group_PDB_Documentation.pdf): 
 
-```Prs_Blw_Pov_Lev_ACS_15_19``` is defined as the "Number of people classified as below the
+> ```Prs_Blw_Pov_Lev_ACS_15_19``` is defined as the "Number of people classified as below the
 poverty level given their total family or household income within the last year, family size, and family composition in the ACS population". 
-
 To calculate the percentage, we can use the ``` Pov_Univ_ACS_15_19``` variable, which is defined as the "Population for whom poverty level is determined". 
 
 <div style = "overflow-y: auto; height: 650px; width = 500px;">
@@ -1021,8 +974,7 @@ prison_boundaries_block_census %>%
 ## Distribution of Average Household Size 
 
 
-```Med_House_Value_BG_ACS_15_19``` is defined as the "Median of ACS respondents' house value
-estimates per block group".
+> ```Tot_Prns_in_HHD_ACS_15_19``` is defined as the "All persons (household population) in ACS occupied housing unit. This is the numerator to calculate the average household size". The denominator used to calculate the average household size is ```Tot_Occp_Units_ACS_15_19```. 
 
 <div style = "overflow-y: auto; height: 650px; width = 500px;">
 
@@ -1073,10 +1025,119 @@ prison_boundaries_block_census %>%
 
 </div> 
 
+## Distribution of Percentage Institutionalized 
 
+
+> ```pct_Inst_GQ_CEN_2010``` is defined as "The percentage of the 2010 Census population who live in group quarters and are primarily ineligible, unable, or unlikely to participate in labor force while residents. Institutional group quarters include correctional facilities for adults, juvenile facilities, nursing facilities, and other institutional facilities."
+
+<div style = "overflow-y: auto; height: 650px; width = 500px;">
 
 
 ```{r}
+
+# distribution of the Percentage Living in Institutional Group Quarters across all block groups in the U.S. 
+blockgroup_level_data %>%
+  mutate(
+         Mean = mean(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         Median = median(pct_Inst_GQ_CEN_2010, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Inst_GQ_CEN_2010)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred", size = 1.2) +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE", size = 1.2)  +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2010 Census data",
+       title = "Distribution of the Percentage Living in Institutional Group Quarters\nin Block Groups in the U.S.") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+# distribution of the Percentage Living in Institutional Group Quarters in block groups where facilities are
+prison_boundaries_block_census %>%
+  mutate(
+         Mean = mean(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         Median = median(pct_Inst_GQ_CEN_2010, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Inst_GQ_CEN_2010)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred", size = 1.2) +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE", size = 1.2)  +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2010 Census data",
+       title = "Distribution of the Percentage Living in Institutional Group Quarters\nin Block Groups Where Facilities Are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), 
+                     limits = c(-3,105)) 
+
+
+# distribution of the Percentage Living in Institutional Group Quarters in block groups where facilities are,
+# faceted by facility type 
+prison_boundaries_block_census %>%
+  group_by(TYPE) %>%
+  mutate(
+         Mean = mean(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         Median = median(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         TYPE = factor(TYPE,  levels = c("LOCAL", "COUNTY",
+                                        "STATE", "FEDERAL",
+                                        "MULTI", "NOT AVAILABLE"))) %>% 
+  ggplot(aes(x = pct_Inst_GQ_CEN_2010)) +
+  geom_histogram(alpha = .9) + 
+  facet_wrap(~TYPE, scales = "free_y") +
+  geom_vline(aes(xintercept = Median), color = "darkred", size = 1.2) +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE", size = 1.2)  +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2010 Census data",
+       title = "Distribution of the Percentage Living in Institutional Group Quarters\nin Block Groups Where Facilities Are Located\nFaceted by Facility Type") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 20), 
+                     limits = c(-3,105)) 
+
+
+
+# distribution of the Percentage Living in Institutional Group Quarters in block groups where facilities are,
+# faceted by security level 
+prison_boundaries_block_census %>%
+  group_by(SECURELVL) %>%
+  mutate(
+         Mean = mean(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         Median = median(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         SECURELVL = factor(SECURELVL,  levels = c("JUVENILE", "MINIMUM",
+                                        "MEDIUM", "MAXIMUM",
+                                        "CLOSE", "NOT AVAILABLE"))) %>% 
+  ggplot(aes(x = pct_Inst_GQ_CEN_2010)) +
+  geom_histogram(alpha = .9) + 
+  facet_wrap(~SECURELVL, scales = "free_y") +
+  geom_vline(aes(xintercept = Median), color = "darkred", size = 1.2) +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE", size = 1.2)  +
+  theme_bw() + 
+  labs(y = "Number of Facilities", 
+       x = "Percentage",
+       subtitle = "Median Percentages in Red, Mean Percentages in Blue\n2010 Census data",
+       title = "Distribution of the Percentage Living in Institutional Group Quarters\nin Block Groups Where Facilities Are Located\nFaceted by Security Level") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 20), 
+                     limits = c(-3,105)) 
+
+
+
+```
+
+</div> 
+
+
+```{r, eval= FALSE}
 
 get_census_data_tract <- function(state_code) {
   region_for_state = paste0("state:", state_code, "+county:*")
@@ -1125,7 +1186,6 @@ region_for_state = paste0("state:", state_code, "+county:*")
                       region = "tract:*")
 
 ```
-
 
 
 
