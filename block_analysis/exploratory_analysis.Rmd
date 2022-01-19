@@ -885,14 +885,20 @@ prison_race <- prison_boundaries_block_census %>%
          Hispanic_ACS_15_19, NH_AIAN_alone_ACS_15_19, 
          NH_Asian_alone_ACS_15_19, NH_Blk_alone_ACS_15_19, 
          NH_NHOPI_alone_ACS_15_19, NH_SOR_alone_ACS_15_19,
-         NH_White_alone_ACS_15_19, Tot_Population_ACS_15_19) %>%
-  mutate(across(4:ncol(.), ~ (.x / Tot_Population_ACS_15_19) * 100))  %>% # get percentage by dividing by total for that block
+         NH_White_alone_ACS_15_19, Tot_Population_ACS_15_19, 
+         STATE, COUNTY, TRACTCE10, block_group) %>%
+  mutate(across(4:10, ~ (.x / Tot_Population_ACS_15_19) * 100)) %>%  # get percentage by dividing by total for that block
   select(-Tot_Population_ACS_15_19) %>%
-  pivot_longer(4:ncol(.), names_to = "Racial Category", values_to  ="Percentage") %>%
+  pivot_longer(4:10, names_to = "Racial Category", values_to  ="Percentage") %>%
   left_join(race_ref, by = c("Racial Category" = "Racial Category"))
 
 
-prison_race %>%
+# note that all block groups are represented in each facet, since each block group has a percentage for each racial category 
+prison_race %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group,  `Racial Category`, Description, Percentage) %>%
+  summarize(n=n()) %>%
+  ungroup() %>% 
   group_by(Description) %>%
   mutate(Median = median(Percentage, na.rm = TRUE),
          Mean = mean(Percentage, na.rm = TRUE)) %>% 
@@ -942,7 +948,95 @@ blockgroup_level_data %>%
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) +
-  xlim(0,100)
+  xlim(-3,103)
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, No_Health_Ins_ACS_15_19, Tot_Population_ACS_15_19) %>%
+  summarize(n = n()) %>%
+  ungroup() %>%
+  mutate(pct_no_insurance = (No_Health_Ins_ACS_15_19 / Tot_Population_ACS_15_19) * 100,
+         Mean = mean(pct_no_insurance, na.rm = TRUE),
+         Median = median(pct_no_insurance, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_no_insurance)) +
+  geom_histogram() + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Percentage Lacking Health Insurance",
+       subtitle = "Median Percentages in Red, Mean Percentages in Blue\n2015 – 2019 5-year ACS sample data",
+       title = "Distribution of the Percentage Lacking Health Insurance\nin Block Groups Where Facilities are Located") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) +
+  xlim(-3, 80)
+
+
+
+# by facility type 
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, No_Health_Ins_ACS_15_19, Tot_Population_ACS_15_19, TYPE) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% group_by(TYPE) %>%
+  mutate(pct_no_insurance = (No_Health_Ins_ACS_15_19 / Tot_Population_ACS_15_19) * 100,
+         Mean = mean(pct_no_insurance, na.rm = TRUE),
+         Median = median(pct_no_insurance, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_no_insurance)) +
+  geom_histogram() + 
+  facet_wrap(~TYPE, scales = "free_y") +
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Percentage Lacking Health Insurance",
+       subtitle = "Median Percentages in Red, Mean Percentages in Blue\n2015 – 2019 5-year ACS sample data",
+       title = "Distribution of the Percentage Lacking Health Insurance\nin Block Groups Where Facilities are Located\nBy Facility Type") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) +
+  xlim(-3, 80)
+
+
+
+# by facility security level 
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, No_Health_Ins_ACS_15_19, Tot_Population_ACS_15_19, SECURELVL) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  group_by(SECURELVL) %>%
+  mutate(pct_no_insurance = (No_Health_Ins_ACS_15_19 / Tot_Population_ACS_15_19) * 100,
+         Mean = mean(pct_no_insurance, na.rm = TRUE),
+         Median = median(pct_no_insurance, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_no_insurance)) +
+  geom_histogram() + 
+  facet_wrap(~SECURELVL, scales = "free_y") +
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Percentage Lacking Health Insurance",
+       subtitle = "Median Percentages in Red, Mean Percentages in Blue\n2015 – 2019 5-year ACS sample data",
+       title = "Distribution of the Percentage Lacking Health Insurance\nin Block Groups Where Facilities are Located\nBy Facility Security Level") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) +
+  xlim(-3,80)
+
+
+
+
+
+
+
+```
+
+
+```{r, eval = FALSE}
+
+### BY FACILITY, WHERE Y-AXIS IS NUMBER OF FACILITIES RATHER THAN BLOCK GROUPS 
 
 
 # faceted by facility type 
@@ -995,7 +1089,6 @@ prison_boundaries_block_census %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   xlim(0,100)
-
 
 
 ```
