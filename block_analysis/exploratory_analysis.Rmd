@@ -400,10 +400,12 @@ blockgroup_level_data %>%
 
 
 # distribution of percentage urbanized
-
+# by block group 
 prison_boundaries_block_census %>% 
   group_by(STATE, COUNTY, TRACTCE10,
-           block_group, pct_URBANIZED_AREA_POP_CEN_2010) %>% summarize() %>% glimpse()
+           block_group, pct_URBANIZED_AREA_POP_CEN_2010) %>% 
+  summarize() %>% 
+  ungroup() %>% 
   mutate(Median = median(pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE),
          Mean = mean(pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE)) %>%
   select(pct_URBANIZED_AREA_POP_CEN_2010, Median, Mean) %>% 
@@ -422,14 +424,24 @@ prison_boundaries_block_census %>%
        title = "Distribution of the Percentage Urbanized Where Facilities are Located") +
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
-        plot.title = element_text(face = "bold", hjust = 0.5)) +
-  ylim(0, 4100)
+        plot.title = element_text(face = "bold", hjust = 0.5))
 
 
 # how many block groups with multiple facilities 
 #prison_boundaries_block_census %>% 
 #  group_by(STATE, COUNTY, TRACTCE10, block_group) %>% 
 #  summarize(n = n()) %>% filter(n  > 1 ) %>% nrow()
+
+
+    
+    
+```
+
+
+
+## Distribution of Percentage Rural
+
+```{r, height = '50%', width = '50%'}
 
 #### FOR COMPARISON -- distribution of percentage rural across the U.S.
 
@@ -456,7 +468,12 @@ blockgroup_level_data %>%
 
 
 # distribution of percentage rural 
-prison_boundaries_block_census %>% 
+## y-axis represents block groups 
+prison_boundaries_block_census %>%   
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, pct_RURAL_POP_CEN_2010) %>% 
+  summarize(n=n()) %>% 
+  ungroup() %>% 
   mutate(Median = median(pct_RURAL_POP_CEN_2010, na.rm = TRUE),
          Mean = mean(pct_RURAL_POP_CEN_2010, na.rm = TRUE)) %>%
   select(pct_RURAL_POP_CEN_2010, Median, Mean) %>% 
@@ -469,22 +486,82 @@ prison_boundaries_block_census %>%
              color = "#718BCE",
               size = 1.2) +
   theme_bw() + 
-  labs(y = "Number of Facilities", 
+  labs(y = "Number of Block Groups", 
        x = "Percentage Rural",
        subtitle = "Mean in Blue, Median in Red\n2010 Census data ",
        title = "Distribution of the Percentage Rural Where Facilities are Located") +
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
-        plot.title = element_text(face = "bold", hjust = 0.5)) +
-  ylim(0, 4100)
+        plot.title = element_text(face = "bold", hjust = 0.5)) 
 
 
-    
-    
+# faceted by TYPE 
+prison_boundaries_block_census %>%   
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, pct_RURAL_POP_CEN_2010, TYPE) %>% 
+  summarize(n=n()) %>% 
+  ungroup() %>% 
+  group_by(TYPE) %>%
+  mutate(Median = median(pct_RURAL_POP_CEN_2010, na.rm = TRUE),
+         Mean = mean(pct_RURAL_POP_CEN_2010, na.rm = TRUE),
+         TYPE = factor(TYPE,  levels = c("LOCAL", "COUNTY",
+                                        "STATE", "FEDERAL",
+                                        "MULTI", "NOT AVAILABLE"))) %>%
+  ggplot(aes(x = pct_RURAL_POP_CEN_2010 )) + 
+  geom_histogram() +
+  facet_wrap(~TYPE, scales = "free_y") +
+  geom_vline(aes(xintercept = Median), 
+             color = "darkred",
+             size = 1.2) +
+  geom_vline(aes(xintercept =Mean), 
+             color = "#718BCE",
+              size = 1.2) +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Percentage Rural",
+       subtitle = "Mean in Blue, Median in Red\n2010 Census data ",
+       title = "Distribution of the Percentage Rural Where Facilities are Located\nFaceted by Facility Type") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) 
+
+
+
+# faceted by SECURELVL 
+prison_boundaries_block_census %>%   
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, pct_RURAL_POP_CEN_2010, SECURELVL) %>% 
+  summarize(n=n()) %>% 
+  ungroup() %>% 
+  group_by(SECURELVL) %>%
+  mutate(Median = median(pct_RURAL_POP_CEN_2010, na.rm = TRUE),
+         Mean = mean(pct_RURAL_POP_CEN_2010, na.rm = TRUE),
+           SECURELVL = factor(SECURELVL, 
+                              levels = c("JUVENILE", 
+                                         "MINIMUM", "MEDIUM",
+                                         "MAXIMUM", "CLOSE", 
+                                         "NOT AVAILABLE"))) %>%
+  ggplot(aes(x = pct_RURAL_POP_CEN_2010 )) + 
+  geom_histogram() +
+  facet_wrap(~SECURELVL, scales = "free_y") +
+  geom_vline(aes(xintercept = Median), 
+             color = "darkred",
+             size = 1.2) +
+  geom_vline(aes(xintercept =Mean), 
+             color = "#718BCE",
+              size = 1.2) +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Percentage Rural",
+       subtitle = "Mean in Blue, Median in Red\n2010 Census data ",
+       title = "Distribution of the Percentage Rural Where Facilities are Located\nFaceted by Security Level") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) 
+
 ```
 
-
-```{r}
+```{r, eval = FALSE}
 
 #### Y-AXIS REPRESENTING FACILITIES RATHER THAN BLOCK GROUPS
 
@@ -675,7 +752,7 @@ prison_boundaries_block_census %>%
            SECURELVL = factor(SECURELVL, 
                               levels = c("JUVENILE", 
                                          "MINIMUM", "MEDIUM",
-                                         "MAIMUM", "CLOSE", 
+                                         "MAXIMUM", "CLOSE", 
                                          "NOT AVAILABLE"))) %>%
     filter(!is.na(Density)) %>% 
   ggplot(aes(x = Median_Age_ACS_15_19 )) + 
