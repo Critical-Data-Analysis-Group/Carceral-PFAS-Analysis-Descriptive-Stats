@@ -190,7 +190,7 @@ Note that we can look at these distributions by block group (where the frequency
 
 <div style = "overflow-y: auto; height: 500px; width = 400px;">
 
-```{r, fig.height = 6, fig.width = 6}
+```{r }
 
 library(forcats)
 
@@ -291,9 +291,6 @@ prison_boundaries_block_census %>%
 
 ```
 
-**Interpretation note on the faceted plots:** for a value on the x-axis in a category, we would interpret the corresonding y-value as the number of block groups with that type (or security level) of facility with the specified median age given by the x-value.
-
-Example: The number of block groups containing a federal facility where the median age was about 60 is about 2. 
 
 
 ```{r, eval = FALSE}
@@ -364,6 +361,12 @@ prison_boundaries_block_census %>%
 
 </div> 
 
+**Interpretation note on the faceted plots:** for a value on the x-axis in a category, we would interpret the corresonding y-value as the number of block groups with that type (or security level) of facility with the specified median age given by the x-value.
+
+Example: The number of block groups containing a federal facility where the median age was about 60 is about 2. 
+
+
+
 ## Distribution of the Percentage Urbanized
 
 > As defined in the [documentation](https://www2.census.gov/adrm/PDB/2021/2021_Block_Group_PDB_Documentation.pdf), the variable definitions are as follows:     
@@ -375,6 +378,8 @@ prison_boundaries_block_census %>%
 
 
 ```{r}
+
+library(scales)
 
 #### FOR COMPARISON -- distribution of percentage urbanized across the full U.S.
 
@@ -397,7 +402,8 @@ blockgroup_level_data %>%
        title = "Distribution of the Percentage Urbanized for Block Groups in the U.S.") +
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
-        plot.title = element_text(face = "bold", hjust = 0.5)) 
+        plot.title = element_text(face = "bold", hjust = 0.5)) +
+  scale_y_continuous(labels = comma)
 
 
 # distribution of percentage urbanized
@@ -530,7 +536,8 @@ blockgroup_level_data %>%
        title = "Distribution of the Percentage Rural in Block Groups in the U.S.") +
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
-        plot.title = element_text(face = "bold", hjust = 0.5)) 
+        plot.title = element_text(face = "bold", hjust = 0.5)) +
+  scale_y_continuous(labels = comma)
 
 
 # distribution of percentage rural 
@@ -688,7 +695,9 @@ library(kableExtra)
 # table of how many block groups had > 50% rural and how many had < 50% rural
 prison_boundaries_block_census %>%    
   group_by(STATE, COUNTY, TRACTCE10,
-           block_group, pct_RURAL_POP_CEN_2010, pct_URBANIZED_AREA_POP_CEN_2010, pct_URBAN_CLUSTER_POP_CEN_2010, SECURELVL) %>% 
+           block_group, pct_RURAL_POP_CEN_2010,
+           pct_URBANIZED_AREA_POP_CEN_2010, 
+           pct_URBAN_CLUSTER_POP_CEN_2010, SECURELVL) %>% 
   summarize(n=n()) %>% 
   ungroup() %>% 
   select(pct_URBANIZED_AREA_POP_CEN_2010,
@@ -702,7 +711,7 @@ prison_boundaries_block_census %>%
          Percentage = (n / total)*100,
          Percentage = paste0(as.character(round(Percentage, 2)), '%')) %>%
   select(Density, Percentage) %>%
-  kbl(caption = "<span style = 'color:black;'><b>Percentage of Facilities in a Block Group that was Mostly Rural or Mostly Urban</b></span><br>Rural block groups are defined here as those where greater than 50% of the 2010 Census total\npopulation for that block group <br> was recorded to live outside of an urbanized area or urban cluster<br></span><i>Data from the 2010 Census</i>") %>%
+  kbl(caption = "<span style = 'color:black;'><b>Percentage of Facilities in a Block Group that was Mostly Rural or Mostly Urban</b></span><br>Rural block groups are defined here as those where greater than 50% of the 2010 Census total\npopulation for that block group <br> was recorded to live outside of an urbanized area or urban cluster<br></span><i>Data from the 2010 Census</i>", align = "l") %>%
   kable_material(c("striped", "hover"), full_width = T) %>%
   row_spec(0, background = "#D9DFEE") 
 
@@ -726,7 +735,7 @@ blockgroup_level_data %>%
             median(blockgroup_level_data$pct_URBAN_CLUSTER_POP_CEN_2010, 
                    na.rm = TRUE),
            median(blockgroup_level_data$pct_RURAL_POP_CEN_2010, na.rm = TRUE))) %>%
-  kbl(caption = "<span style = 'color:black;'><b>For Block Groups in the United States: Mean and Median Percentages in Urbanized, Urban Cluster, and Rural Areas</b></span><span style = 'float:center'><i><span><br> Data from the 2010 Census</i></span>") %>%
+  kbl(caption = "<span style = 'color:black;'><b>For Block Groups in the United States: Mean and Median Percentages in Urbanized, Urban Cluster, and Rural Areas</b></span><span style = 'float:center'><i><span><br> Data from the 2010 Census</i></span>", align = "l") %>%
   kable_material(c("striped", "hover"), full_width = F) %>%
   row_spec(0, background = "#D9DFEE") 
 
@@ -750,7 +759,7 @@ prison_boundaries_block_census %>%
    pivot_wider(names_from = x, 
                values_from = value) %>%
   rename("Population Density Category" = temp) %>%  
-  kbl(caption = "<span style = 'color:black;'><b> For Block Groups Where Facilities are Located: Mean and Median Percentages in Urbanized, Urban Cluster, and Rural Areas</b></span><span style = 'float:center'><i><span><br> Data from the 2010 Census</i></span>") %>%
+  kbl(caption = "<span style = 'color:black;'><b> For Block Groups Where Facilities are Located: Mean and Median Percentages in Urbanized, Urban Cluster, and Rural Areas</b></span><span style = 'float:center'><i><span><br> Data from the 2010 Census</i></span>", align = "l") %>%
   kable_material(c("striped", "hover"), full_width = F) %>%
   row_spec(0, background = "#D9DFEE") 
 
@@ -761,9 +770,9 @@ prison_boundaries_block_census %>%
 We can also see how the distribution of age varies depending on whether blocks are primarily urban or rural, among different facility types, and among different facility security levels. 
 
 
-<div style = "overflow-y: auto; height: 650px; width = 500px;">
+<div style = "overflow-y: auto; height: 800px; width = 500px;">
 
-```{r, fig.height = 6, fig.width = 6}
+```{r fig.height = 8}
 ###### distribution of median age in rural versus urban settings, where rural blocks are defined as those
 # where more than 50% of the population is rural 
 # mean of the distribution is higher in rural areas, a trend that has been reported elsewhere 
@@ -788,10 +797,10 @@ prison_boundaries_block_census %>%
   geom_histogram(alpha = .8) +
   geom_vline(aes(xintercept = Median ), color = "darkred") +
   theme_bw() + 
-  labs(y = "Number of Facilities", 
+  labs(y = "Number of Block Groups", 
        x = "Median Age",
-       subtitle = "2015 – 2019 5-year ACS sample data & 2010 Census Data",
-       title = "Distribution of Median Age in Block Groups Where Facilities are Located,\nMedian of Each Distribution in Red") +
+       subtitle = "Median of Each Distribution in Red\n2015 – 2019 5-year ACS sample data & 2010 Census Data",
+       title = "Distribution of Median Age in Block Groups Where Facilities are Located,\nBy Population Density and Facility Type") +
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5),
@@ -817,7 +826,7 @@ prison_boundaries_block_census %>%
   geom_histogram(alpha = .8) +
   geom_vline(aes(xintercept = Median ), color = "darkred") +
   theme_bw() + 
-  labs(y = "Number of Facilities", 
+  labs(y = "Number of Block Groups", 
        x = "Median Age",
        subtitle = "2015 – 2019 5-year ACS sample data & 2010 Census Data",
        title = "Distribution of Median Age in Block Groups Where Facilities are Located\n by Population Density Category and Security Level") +
@@ -835,9 +844,9 @@ prison_boundaries_block_census %>%
 
 ## Distribution of Racial Percentages for each Racial Category
 
-<div style = "overflow-y: auto; height: 800px; width = 500px;">
+<div style = "overflow-y: auto; height: 900px; width = 500px;">
 
-```{r, fig.height = 6, fig.width = 6}
+```{r fig.height = 8}
 # prison_blocks_race
 
 # 
@@ -852,6 +861,7 @@ race_ref <- read_csv("./data/races_reference.csv", col_names = FALSE) %>%
          Description = str_replace(Description, ",", ",\n")) %>%
   filter(!str_detect(Description, "Census") & !str_detect(Description, "MOE") )
 
+# for full U.S.
 blockgroup_level_data %>% 
   select(
          Hispanic_ACS_15_19, NH_AIAN_alone_ACS_15_19, 
@@ -878,7 +888,8 @@ blockgroup_level_data %>%
        title = "Distribution of Racial Percentages in Block Groups in the U.S.") +
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
-        plot.title = element_text(face = "bold", hjust = 0.5))
+        plot.title = element_text(face = "bold", hjust = 0.5)) +
+  scale_y_continuous(labels = comma)
 
 prison_race <- prison_boundaries_block_census %>% 
   select(FACILITYID, TYPE, SECURELVL,
@@ -893,7 +904,7 @@ prison_race <- prison_boundaries_block_census %>%
   left_join(race_ref, by = c("Racial Category" = "Racial Category"))
 
 
-# note that all block groups are represented in each facet, since each block group has a percentage for each racial category 
+# note that all block groups are represented in each facet, since each block group has a percentage for each racial category # for block groups where facilities are located 
 prison_race %>% 
   group_by(STATE, COUNTY, TRACTCE10,
            block_group,  `Racial Category`, Description, Percentage) %>%
@@ -909,7 +920,7 @@ prison_race %>%
   facet_wrap(~Description, scales = "free_y", ncol = 2) +
   scale_x_continuous(breaks = seq(0, 100, by = 10)) +
   theme_bw() + 
-  labs(y = "Number of Facilities", 
+  labs(y = "Number of Block Groups", 
        x = "Percentage",
        subtitle = "Median Percentages in Red, Mean Percentages in Blue\n2015 – 2019 5-year ACS sample data",
        title = "Distribution of Racial Percentages in Block Groups Where Facilities are Located") +
@@ -948,7 +959,8 @@ blockgroup_level_data %>%
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) +
-  xlim(-3, 80)
+  xlim(-3, 80) +
+  scale_y_continuous(labels = comma)
 
 prison_boundaries_block_census %>%
   group_by(STATE, COUNTY, TRACTCE10,
@@ -996,7 +1008,7 @@ prison_boundaries_block_census %>%
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) +
-  xlim(-3, 80)
+  xlim(-3, 80) 
 
 
 
@@ -1106,7 +1118,7 @@ To calculate the percentage, we can use the ``` Pov_Univ_ACS_15_19``` variable, 
 <div style = "overflow-y: auto; height: 650px; width = 500px;">
 
 
-```{r, fig.height = 6, fig.width = 6}
+```{r}
 
 #### FOR COMPARISON -- poverty distribution for all block groups in the U.S.
 blockgroup_level_data %>%
@@ -1125,14 +1137,8 @@ blockgroup_level_data %>%
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) +
-  xlim(-5,100)
-
-
- %>%
-  group_by(STATE, COUNTY, TRACTCE10,
-           block_group, No_Health_Ins_ACS_15_19, Tot_Population_ACS_15_19) %>%
-  summarize(n = n()) %>%
-  ungroup() %>%
+  xlim(-5,100) +
+  scale_y_continuous(labels = comma)
 
 
   
@@ -1196,7 +1202,7 @@ prison_boundaries_block_census %>%
   mutate(pct_below_pov = (Prs_Blw_Pov_Lev_ACS_15_19 / Pov_Univ_ACS_15_19) * 100) %>% 
   group_by(SECURELVL) %>%
   mutate(Mean = mean(pct_below_pov, na.rm = TRUE),
-         Median = median(pct_below_pov, na.rm = TRUE)) %>% View()
+         Median = median(pct_below_pov, na.rm = TRUE)) %>%
   ggplot(aes(x = pct_below_pov)) +
   geom_histogram(alpha = .9) + 
   facet_wrap(~SECURELVL, scales = "free_y") +
@@ -1309,7 +1315,7 @@ prison_boundaries_block_census %>%
 
 <div style = "overflow-y: auto; height: 650px; width = 500px;">
 
-```{r, fig.height = 6, fig.width = 6}
+```{r}
 
 # distribution of percentage of housing units rented 
 blockgroup_level_data %>%
@@ -1328,7 +1334,8 @@ blockgroup_level_data %>%
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) +
-  xlim(-5,100)
+  xlim(-5,100) +
+  scale_y_continuous(labels = comma)
 
 
 
@@ -1518,7 +1525,9 @@ blockgroup_level_data %>%
        title = "Distribution of the Average Household Size\nin Block Groups in the U.S.") +
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
-        plot.title = element_text(face = "bold", hjust = 0.5)) + xlim(0, 8)
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  xlim(0, 8)  +
+  scale_y_continuous(labels = comma)
 
 
 
@@ -1702,6 +1711,12 @@ prison_boundaries_block_census %>%
 
 
 
+# distribution of the Percentage Living in Institutional Group Quarters in block groups where facilities are,
+# faceted by STATE
+
+
+
+
 ```
 
 
@@ -1791,9 +1806,44 @@ prison_boundaries_block_census %>%
 ```
 
 
-
-
 </div> 
+
+<div style = "overflow-y: auto; height: 900px; width = 500px;">
+
+
+```{r, fig.height = 12, fig.width = 12}
+
+prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, pct_Inst_GQ_CEN_2010) %>%
+  summarize(n = n()) %>%
+  ungroup() %>%
+  group_by(STATE) %>%
+  mutate(
+         Mean = mean(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         Median = median(pct_Inst_GQ_CEN_2010, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Inst_GQ_CEN_2010)) +
+  geom_histogram(alpha = .9) + 
+  facet_wrap(~STATE, scales = "free_y", ncol = 5) +
+  geom_vline(aes(xintercept = Median), color = "darkred", size = 1.2) +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE", size = 1.2)  +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Percentage in Institutional Group Quarters",
+       subtitle = "Median Percentages in Red, Mean Percentages in Blue\n2010 Census data",
+       title = "Distribution of the Percentage Living in Institutional Group Quarters\nin Block Groups Where Facilities Are Located\nFaceted by State") +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 20), 
+                     limits = c(-3,105)) 
+
+
+
+
+```
+
+</div>
 
 ## Distribution of the Percentage Receiving Public Assistance Income 
 
@@ -2007,7 +2057,7 @@ prison_boundaries_block_census %>%
 <div style = "overflow-y: auto; height: 650px; width = 500px;">
 
 
-```{r, fig.height = 6, fig.width = 6}
+```{r}
 
 # distribution across the U.S.
 blockgroup_level_data %>%
@@ -2028,6 +2078,43 @@ blockgroup_level_data %>%
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
 
+
+
+#distribution in block groups where facilities are located 
+prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, 
+           pct_ENG_VW_ACS_15_19) %>%
+  summarize(n = n()) %>%
+  ungroup() %>%
+  mutate(
+         Mean = mean(pct_ENG_VW_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_ENG_VW_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_ENG_VW_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Block Groups", 
+       x = "Percentage",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage Where No One Over 14 in the Household Speaks English "Very Well" \nin Block Groups Where Facilities are Located') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+```
+
+
+
+
+```{r, eval = FALSE}
+
+###### BY FACILITY, WHERE Y-AXIS REPRESENTS NUMBER OF FACILITIES
+
+
 #distribution in block groups where facilities are located 
 prison_boundaries_block_census %>%
   mutate(
@@ -2046,7 +2133,6 @@ prison_boundaries_block_census %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
-
 
 ```
 
@@ -2116,7 +2202,7 @@ The tract level data has additional variables available, and separate [documenta
 
 
 
-```{r, fig.height = 6, fig.width = 6}
+```{r}
 
 # across U.S.
 tract_level_data %>% 
@@ -2136,6 +2222,40 @@ tract_level_data %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+# for tracts where facilities are located 
+prison_tract %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           pct_Pop_NoCompDevic_ACS_15_19) %>%
+  summarize(n = n()) %>%
+  ungroup() %>%
+  mutate(
+         Mean = mean(pct_Pop_NoCompDevic_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Pop_NoCompDevic_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Pop_NoCompDevic_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Tracts", 
+       x = "Percentage Without a Computing Device",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage of the Population Without a Computing Device\nin Tracts Where Facilities are Located') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+  
+
+
+```
+
+
+```{r, eval = FALSE}
+
+
+##### BY FACILITY, WHERE Y-AXIS IS THE NUMBER OF FACILITIES 
 
 
 # for tracts where facilities are located 
@@ -2175,7 +2295,7 @@ The thresholds for upload and download speeds are set by the [Federal Communicat
 <div style = "overflow-y: auto; height: 800px; width = 500px;">
 
 
-```{r, fig.height = 6, fig.width = 6}
+```{r}
 
 
 # across the U.S.
@@ -2198,6 +2318,37 @@ tract_level_data %>%
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
 
 
+# for tracts where facilities are located 
+prison_tract %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           pct_Pop_w_BroadComp_ACS_15_19) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  mutate(
+         Mean = mean(pct_Pop_w_BroadComp_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Pop_w_BroadComp_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Pop_w_BroadComp_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Tracts", 
+       x = "Percentage With Broadband Internet Access",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage of the Population With Broadband Internet Access\nin Tracts Where Facilities are Located') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+```
+
+
+```{r, eval = FALSE}
+
+##### BY FACILITY TYPE, WHERE Y-AXIS REPRESENTS NUMBER OF FACILITIES
+
 # for tracts where facilities are lcoated 
 prison_tract %>% 
   mutate(
@@ -2216,7 +2367,6 @@ prison_tract %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
-
 
 ```
 
@@ -2258,6 +2408,39 @@ tract_level_data %>%
 
 # in tracts where facilities are located
 prison_tract %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           pct_Civ_unemp_16p_ACS_15_19) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  mutate(
+         Mean = mean(pct_Civ_unemp_16p_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Civ_unemp_16p_ACS_15_19, na.rm = TRUE)) %>% 
+  ggplot(aes(x = pct_Civ_unemp_16p_ACS_15_19)) +
+  geom_histogram(alpha = .9) + 
+  geom_vline(aes(xintercept = Median), color = "darkred") +
+  geom_vline(aes(xintercept = Mean), color = "#718BCE")  +
+  theme_bw() + 
+  labs(y = "Number of Tracts", 
+       x = "Percentage of Civilians Ages 16+ Unemployed",
+       subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
+       title = 'Distribution of the Percentage of Civilians Ages 16+ in the Labor Force Who are Unemployed\nin Tracts Where Facilities are Located') +
+  theme(text = element_text(family = "Optima"),
+        plot.subtitle = element_text(face = "italic", hjust = .5),
+        plot.title = element_text(face = "bold", hjust = 0.5)) + 
+  scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+
+
+```
+
+
+```{r}
+
+##### BY FACILITY TYPE, WHERE Y-AXIS IS THE NUMBER OF FACILITIES 
+
+# in tracts where facilities are located
+prison_tract %>% 
   mutate(
          Mean = mean(pct_Civ_unemp_16p_ACS_15_19, na.rm = TRUE),
          Median = median(pct_Civ_unemp_16p_ACS_15_19, na.rm = TRUE)) %>% 
@@ -2274,7 +2457,6 @@ prison_tract %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
-
 
 
 
