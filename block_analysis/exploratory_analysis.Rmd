@@ -1164,14 +1164,16 @@ prison_race <- prison_boundaries_block_census %>%
          STATE, COUNTY, TRACTCE10, block_group) %>%
   mutate(across(4:10, ~ (.x / Tot_Population_ACS_15_19) * 100)) %>%  # get percentage by dividing by total for that block
   select(-Tot_Population_ACS_15_19) %>%
-  pivot_longer(4:10, names_to = "Racial Category", values_to  ="Percentage") %>%
+  pivot_longer(4:10, names_to = "Racial Category",
+               values_to  ="Percentage") %>%
   left_join(race_ref, by = c("Racial Category" = "Racial Category"))
 
 
 # note that all block groups are represented in each facet, since each block group has a percentage for each racial category # for block groups where facilities are located 
 prison_race %>% 
   group_by(STATE, COUNTY, TRACTCE10,
-           block_group,  `Racial Category`, Description, Percentage) %>%
+           block_group,  `Racial Category`, 
+           Description, Percentage) %>%
   summarize(n=n()) %>%
   ungroup() %>% 
   group_by(Description) %>%
@@ -1212,7 +1214,8 @@ us <- blockgroup_level_data %>%
   summarize(Median = median(Percentage, na.rm = TRUE),
          Mean = mean(Percentage, na.rm = TRUE)) %>% 
   rename(`Median for Block Groups in the U.S.` = Median,
-         `Mean for Block Groups in the U.S.` = Mean)
+         `Mean for Block Groups in the U.S.` = Mean) %>%
+  mutate(Description = str_replace_all(Description, "\\n", "<br>"))
 
 
 
@@ -1225,23 +1228,24 @@ fac <- prison_race %>%
   group_by(Description) %>%
   summarize(Median = median(Percentage, na.rm = TRUE),
          Mean = mean(Percentage, na.rm = TRUE)) %>% 
-  rename(`Median for Block Groups\nWhere Facilities are Located` = Median,
-         `Mean for Block Groups\nWhere Facilities are Located` = Mean,
-         Description2 = Description)
+  rename(`Median for Block Groups<br>Where Facilities are Located` = Median,
+         `Mean for Block Groups<br>Where Facilities are Located` = Mean,
+         Description2 = Description) 
 
 
   
 cbind(us, fac) %>% 
   select(-Description2, Description, 
          `Median for Block Groups in the U.S.`,
-         `Median for Block Groups\nWhere Facilities are Located`,
+         `Median for Block Groups<br>Where Facilities are Located`,
          `Mean for Block Groups in the U.S.`,
-        `Mean for Block Groups\nWhere Facilities are Located` ) %>% 
+        `Mean for Block Groups<br>Where Facilities are Located` ) %>% 
   mutate(across(2:5, ~paste0(round(., digits = 2), "%")))  %>%
   kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentages for Each Racial Category in Block Groups</b></span><br><i>Data from the 2015-2019 ACS</i>", 
-      align = "l") %>%
-  kable_material(c("striped", "hover"), full_width = T) %>%
-  row_spec(0, background = "#D9DFEE") 
+      align = "l", escape = FALSE) %>%
+  kable_material(c("striped", "hover"), full_width = F) %>%
+  row_spec(0, background = "#D9DFEE")  %>% 
+  column_spec(1:2, width = "2cm")
 
 
 
@@ -3136,7 +3140,7 @@ tract_level_data %>%
   labs(y = "Number of Tracts", 
        x = "Percentage With Broadband Internet Access",
        subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
-       title = 'Distribution of the Percentage of the Population With Broadband Internet Access\nin Tracts in the U.S.') +
+       title = 'Distribution of the Percentage of the Population with Broadband Internet Access\nin Tracts in the U.S.') +
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
@@ -3160,11 +3164,41 @@ prison_tract %>%
   labs(y = "Number of Tracts", 
        x = "Percentage With Broadband Internet Access",
        subtitle = "Median Percentage in Red, Mean Percentage in Blue\n2015 – 2019 5-year ACS sample data",
-       title = 'Distribution of the Percentage of the Population With Broadband Internet Access\nin Tracts Where Facilities are Located') +
+       title = 'Distribution of the Percentage of the Population with Broadband Internet Access\nin Tracts Where Facilities are Located') +
   theme(text = element_text(family = "Optima"),
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+#### table for comparison
+
+us <- tract_level_data %>%
+  summarize(
+         Mean = mean(pct_Pop_w_BroadComp_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Pop_w_BroadComp_ACS_15_19, na.rm = TRUE)) %>%
+  mutate(region = "Tracts in the U.S.")
+
+
+fac <- prison_tract %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           pct_Pop_w_BroadComp_ACS_15_19) %>%
+  summarize(n = n()) %>%
+  ungroup() %>%
+  summarize(Mean = mean(pct_Pop_w_BroadComp_ACS_15_19, 
+                        na.rm = TRUE),
+            Median = median(pct_Pop_w_BroadComp_ACS_15_19, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Tracts Where\nFacilities are Located")
+  
+
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Population with Broadband Internet Access in Tracts</b></span><br><i>Data from the 2015 - 2019 ACS</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
 
 
 ```
@@ -3206,7 +3240,7 @@ the labor force that are unemployed".
 <div style = "overflow-y: auto; height: 800px; width = 500px;">
 
 
-```{r, fig.height = 6, fig.width = 6}
+```{r}
 
 
 # across the U.S.
@@ -3255,6 +3289,36 @@ prison_tract %>%
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
 
 
+#### table for comparison
+
+us <- tract_level_data %>%
+  summarize(
+         Mean = mean(pct_Civ_unemp_16p_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Civ_unemp_16p_ACS_15_19, na.rm = TRUE)) %>%
+  mutate(region = "Tracts in the U.S.")
+
+
+fac <- prison_tract %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           pct_Civ_unemp_16p_ACS_15_19) %>%
+  summarize(n = n()) %>%
+  ungroup() %>%
+  summarize(Mean = mean(pct_Civ_unemp_16p_ACS_15_19, 
+                        na.rm = TRUE),
+            Median = median(pct_Civ_unemp_16p_ACS_15_19, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Tracts Where\nFacilities are Located")
+  
+
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of Civilians Ages 16+ in the Labor Force Who are Unemployed in Tracts</b></span><br><i>Data from the 2015 - 2019 ACS</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), 
+                 full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
 
 
 ```
