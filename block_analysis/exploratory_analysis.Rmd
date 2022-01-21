@@ -502,8 +502,6 @@ prison_boundaries_block_census %>%
 
 ###### tables for comparison
 
-
-
 us <- blockgroup_level_data %>%
   select(pct_URBANIZED_AREA_POP_CEN_2010) %>% 
   summarize(Mean = mean(pct_URBANIZED_AREA_POP_CEN_2010,
@@ -723,6 +721,44 @@ prison_boundaries_block_census %>%
         plot.title = element_text(face = "bold", hjust = 0.5)) 
 
 
+
+
+###### tables for comparison
+
+us <- blockgroup_level_data %>%
+  select(pct_RURAL_POP_CEN_2010) %>% 
+  summarize(Mean = mean(pct_RURAL_POP_CEN_2010,
+                        na.rm = TRUE),
+            Mean = round(Mean, digits = 1),
+            Median = median(pct_RURAL_POP_CEN_2010, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Block Groups in the U.S.")
+
+
+fac <- prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, 
+           TRACTCE10, block_group, 
+           pct_RURAL_POP_CEN_2010) %>% 
+  summarize() %>% 
+  ungroup() %>% 
+  summarize(Mean = mean(pct_RURAL_POP_CEN_2010, 
+                        na.rm = TRUE),
+            Mean = round(Mean, digits = 1),
+            Median = median(pct_RURAL_POP_CEN_2010, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Block Groups Where\nFacilities are Located")
+  
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~paste0(., "%"))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Rural in Block Groups</b></span><br><i>Data from the 2010 Census</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
+
+
 # faceted by TYPE 
 prison_boundaries_block_census %>%   
   group_by(STATE, COUNTY, TRACTCE10,
@@ -753,6 +789,34 @@ prison_boundaries_block_census %>%
 
 
 
+### table by type 
+
+prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, 
+           TRACTCE10, block_group, 
+           pct_RURAL_POP_CEN_2010, TYPE) %>% 
+  summarize() %>% 
+  ungroup() %>% 
+  group_by(TYPE) %>% 
+  summarize(Mean = mean(pct_RURAL_POP_CEN_2010, 
+                        na.rm = TRUE),
+            Mean = round(Mean, digits = 2),
+            Median = median(pct_RURAL_POP_CEN_2010, 
+                            na.rm = TRUE)) %>% 
+  mutate(across(c(Mean, Median), ~paste0(., "%"))) %>%
+  rename(`Facility Type` = TYPE) %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of Percentage Rural in Block Groups Where Facilities are Located</b><br>by Facility Type</span><br><i>Data from the 2010 Census</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
+
+
+
+
+
+
+
 # faceted by SECURELVL 
 prison_boundaries_block_census %>%   
   group_by(STATE, COUNTY, TRACTCE10,
@@ -780,6 +844,39 @@ prison_boundaries_block_census %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5),
         strip.text = element_text(face = "bold")) 
+
+
+### table by security level  
+
+prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, 
+           TRACTCE10, block_group, 
+           pct_RURAL_POP_CEN_2010, SECURELVL) %>% 
+  summarize() %>% 
+  ungroup() %>% 
+  group_by(SECURELVL) %>% 
+  summarize(Mean = mean(pct_RURAL_POP_CEN_2010, 
+                        na.rm = TRUE),
+            Mean = round(Mean, digits = 2),
+            Median = median(pct_RURAL_POP_CEN_2010, 
+                            na.rm = TRUE),
+            Median = round(Median, digits = 2)) %>% 
+  mutate(across(c(Mean, Median), ~paste0(., "%"))) %>%
+  rename(`Facility Security Level` = SECURELVL) %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of Percentage Rural in Block Groups Where Facilities are Located</b><br>by Facility Security Level</span><br><i>Data from the 2010 Census</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
+
+
+
+
+
+
+
+
+
 
 ```
 
@@ -904,12 +1001,18 @@ prison_boundaries_block_census %>%
   summarize(n=n()) %>% 
   ungroup() %>% 
   summarize(x = c("Mean", "Median"),
-            Urban =c(mean(pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE),
-                     median(pct_URBANIZED_AREA_POP_CEN_2010, na.rm = TRUE)),
-            `Urban Cluster` = c(mean(pct_URBAN_CLUSTER_POP_CEN_2010, na.rm = TRUE), 
-                                median(pct_URBAN_CLUSTER_POP_CEN_2010, na.rm = TRUE)),
-            Rural = c(mean(pct_RURAL_POP_CEN_2010, na.rm = TRUE), 
-            median(pct_RURAL_POP_CEN_2010, na.rm = TRUE))) %>% # following lines transpose the tibble
+            Urban =c(mean(pct_URBANIZED_AREA_POP_CEN_2010, 
+                          na.rm = TRUE),
+                     median(pct_URBANIZED_AREA_POP_CEN_2010, 
+                            na.rm = TRUE)),
+            `Urban Cluster` = c(mean(pct_URBAN_CLUSTER_POP_CEN_2010, 
+                                     na.rm = TRUE), 
+                                median(pct_URBAN_CLUSTER_POP_CEN_2010, 
+                                       na.rm = TRUE)),
+            Rural = c(mean(pct_RURAL_POP_CEN_2010, 
+                           na.rm = TRUE), 
+            median(pct_RURAL_POP_CEN_2010, 
+                   na.rm = TRUE))) %>% # following lines transpose the tibble
    pivot_longer(cols = -x , names_to = "temp") %>% 
    pivot_wider(names_from = x, 
                values_from = value) %>%
@@ -928,6 +1031,7 @@ We can also see how the distribution of age varies depending on whether blocks a
 <div style = "overflow-y: auto; height: 800px; width = 500px;">
 
 ```{r fig.height = 8}
+
 ###### distribution of median age in rural versus urban settings, where rural blocks are defined as those
 # where more than 50% of the population is rural 
 # mean of the distribution is higher in rural areas, a trend that has been reported elsewhere 
@@ -960,6 +1064,12 @@ prison_boundaries_block_census %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5),
         strip.text = element_text(face = "bold"))
+
+
+
+
+
+
 
 
 
@@ -1002,7 +1112,6 @@ prison_boundaries_block_census %>%
 <div style = "overflow-y: auto; height: 900px; width = 500px;">
 
 ```{r fig.height = 8}
-# prison_blocks_race
 
 # 
 #  mutate(sum_all = Hispanic_ACS_15_19 + NH_AIAN_alone_ACS_15_19 + NH_Asian_alone_ACS_15_19 + NH_Blk_alone_ACS_15_19 + NH_NHOPI_alone_ACS_15_19 + NH_SOR_alone_ACS_15_19 + NH_White_alone_ACS_15_19) %>% View()
@@ -1083,6 +1192,60 @@ prison_race %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5))
 
+
+###### tables for comparison
+
+
+us <- blockgroup_level_data %>% 
+  select(
+         Hispanic_ACS_15_19, NH_AIAN_alone_ACS_15_19, 
+         NH_Asian_alone_ACS_15_19, NH_Blk_alone_ACS_15_19, 
+         NH_NHOPI_alone_ACS_15_19, NH_SOR_alone_ACS_15_19,
+         NH_White_alone_ACS_15_19, Tot_Population_ACS_15_19) %>%
+  mutate(across(1:ncol(.), ~ (.x / Tot_Population_ACS_15_19) * 100)) %>% # get percentage by dividing by total for that block
+  select(-Tot_Population_ACS_15_19) %>%
+  pivot_longer(1:ncol(.), 
+               names_to = "Racial Category",
+               values_to  ="Percentage") %>%
+  left_join(race_ref, by = c("Racial Category" = "Racial Category")) %>%
+  group_by(Description) %>%
+  summarize(Median = median(Percentage, na.rm = TRUE),
+         Mean = mean(Percentage, na.rm = TRUE)) %>% 
+  rename(`Median for Block Groups in the U.S.` = Median,
+         `Mean for Block Groups in the U.S.` = Mean)
+
+
+
+fac <- prison_race %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group,  `Racial Category`, 
+           Description, Percentage) %>%
+  summarize(n=n()) %>%
+  ungroup() %>% 
+  group_by(Description) %>%
+  summarize(Median = median(Percentage, na.rm = TRUE),
+         Mean = mean(Percentage, na.rm = TRUE)) %>% 
+  rename(`Median for Block Groups\nWhere Facilities are Located` = Median,
+         `Mean for Block Groups\nWhere Facilities are Located` = Mean,
+         Description2 = Description)
+
+
+  
+cbind(us, fac) %>% 
+  select(-Description2, Description, 
+         `Median for Block Groups in the U.S.`,
+         `Median for Block Groups\nWhere Facilities are Located`,
+         `Mean for Block Groups in the U.S.`,
+        `Mean for Block Groups\nWhere Facilities are Located` ) %>% 
+  mutate(across(2:5, ~paste0(round(., digits = 2), "%")))  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentages for Each Racial Category in Block Groups</b></span><br><i>Data from the 2015-2019 ACS</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
+
+
 ```
 
 
@@ -1140,6 +1303,44 @@ prison_boundaries_block_census %>%
   xlim(-3, 80)
 
 
+#### table for comparison
+
+us <- blockgroup_level_data %>%
+  mutate(pct_no_insurance = (No_Health_Ins_ACS_15_19 / Tot_Population_ACS_15_19) * 100) %>% 
+  summarize(
+         Mean = mean(pct_no_insurance, na.rm = TRUE),
+         Median = median(pct_no_insurance, na.rm = TRUE)) %>%
+  mutate(region = "Block Groups in the U.S.")
+
+
+fac <- prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, 
+           TRACTCE10, block_group, 
+           No_Health_Ins_ACS_15_19,
+           Tot_Population_ACS_15_19 ) %>% 
+  summarize() %>% 
+  ungroup() %>% 
+  mutate(pct_no_insurance = (No_Health_Ins_ACS_15_19 / Tot_Population_ACS_15_19) * 100) %>% 
+  summarize(Mean = mean(pct_no_insurance, 
+                        na.rm = TRUE),
+            Mean = round(Mean, digits = 1),
+            Median = median(pct_no_insurance, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Block Groups Where\nFacilities are Located")
+  
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Without Health Insurance in Block Groups</b></span><br><i>Data from the 2010 Census</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
+
+
+
+
 
 # by facility type 
 prison_boundaries_block_census %>%
@@ -1164,6 +1365,27 @@ prison_boundaries_block_census %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) +
   xlim(-3, 80) 
+
+
+
+# table by facility type
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, No_Health_Ins_ACS_15_19, Tot_Population_ACS_15_19, TYPE) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% group_by(TYPE) %>%
+  mutate(pct_no_insurance = (No_Health_Ins_ACS_15_19 / Tot_Population_ACS_15_19) * 100) %>%
+  summarize(
+         Mean = mean(pct_no_insurance, na.rm = TRUE),
+         Median = median(pct_no_insurance, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  rename(`Facility Type` = TYPE) %>% 
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Without Health Insurance in Block Groups, By Facility Type</b></span><br><i>Data from the 2015 - 2019 ACS</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
 
 
 
@@ -1194,7 +1416,25 @@ prison_boundaries_block_census %>%
 
 
 
+# table by security level
 
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, No_Health_Ins_ACS_15_19, 
+           Tot_Population_ACS_15_19, SECURELVL) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  group_by(SECURELVL) %>%
+  mutate(pct_no_insurance = (No_Health_Ins_ACS_15_19 / Tot_Population_ACS_15_19) * 100) %>%
+  summarize(
+         Mean = mean(pct_no_insurance, na.rm = TRUE),
+         Median = median(pct_no_insurance, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  rename(`Security Level` = SECURELVL) %>% 
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Without Health Insurance in Block Groups, By Security Level</b></span><br><i>Data from the 2015 - 2019 ACS</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
 
 
 
@@ -1320,6 +1560,46 @@ prison_boundaries_block_census  %>%
   xlim(-5,100)
 
 
+#### table for comparison
+
+us <- blockgroup_level_data %>%
+  mutate(pct_below_pov = (Prs_Blw_Pov_Lev_ACS_15_19 / Pov_Univ_ACS_15_19) * 100) %>% 
+  summarize(
+         Mean = mean(pct_below_pov, na.rm = TRUE),
+         Median = median(pct_below_pov, na.rm = TRUE)) %>%
+  mutate(region = "Block Groups in the U.S.")
+
+
+fac <- prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, 
+           TRACTCE10, block_group, 
+           Prs_Blw_Pov_Lev_ACS_15_19,
+           Pov_Univ_ACS_15_19 ) %>% 
+  summarize() %>% 
+  ungroup()  %>%
+  mutate(pct_below_pov = (Prs_Blw_Pov_Lev_ACS_15_19 / Pov_Univ_ACS_15_19) * 100) %>% 
+  summarize(Mean = mean(pct_below_pov, 
+                        na.rm = TRUE),
+            Mean = round(Mean, digits = 1),
+            Median = median(pct_below_pov, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Block Groups Where\nFacilities are Located")
+  
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Below the Poverty Line in Block Groups</b></span><br><i>Data from the 2015 - 2019 ACS</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
+
+
+
+
+
+
 
 # by facility type 
 prison_boundaries_block_census %>%
@@ -1347,6 +1627,26 @@ prison_boundaries_block_census %>%
   xlim(-5,100)
   
   
+# table by facility type
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, Prs_Blw_Pov_Lev_ACS_15_19, 
+           Pov_Univ_ACS_15_19, TYPE) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% group_by(TYPE) %>%
+  mutate(pct_below = (Prs_Blw_Pov_Lev_ACS_15_19 / Pov_Univ_ACS_15_19) * 100) %>%
+  summarize(
+         Mean = mean(pct_below, na.rm = TRUE),
+         Median = median(pct_below, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  rename(`Facility Type` = TYPE) %>% 
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Below the Poverty Line in Block Groups, By Facility Type</b></span><br><i>Data from the 2015 - 2019 ACS</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
 
 # by security level 
 prison_boundaries_block_census %>%
@@ -1373,6 +1673,26 @@ prison_boundaries_block_census %>%
         plot.title = element_text(face = "bold", hjust = 0.5)) +
   xlim(-5,100)
 
+
+# table by security level
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, Prs_Blw_Pov_Lev_ACS_15_19, 
+           Pov_Univ_ACS_15_19, SECURELVL) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  group_by(SECURELVL) %>%
+  mutate(pct_below = (Prs_Blw_Pov_Lev_ACS_15_19 / Pov_Univ_ACS_15_19) * 100) %>%
+  summarize(
+         Mean = mean(pct_below, na.rm = TRUE),
+         Median = median(pct_below, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  rename(`Facility Security Level` = SECURELVL) %>% 
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Below the Poverty Line in Block Groups, By Facility Security Level</b></span><br><i>Data from the 2015 - 2019 ACS</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
   
 ```
 
@@ -1519,6 +1839,47 @@ prison_boundaries_block_census %>%
 
 
 
+
+#### table for comparison
+
+us <- blockgroup_level_data %>%
+  mutate(pct_rented = (Renter_Occp_HU_ACS_15_19 / Tot_Occp_Units_ACS_15_19) * 100) %>% 
+  summarize(
+         Mean = mean(pct_rented, na.rm = TRUE),
+         Median = median(pct_rented, na.rm = TRUE)) %>%
+  mutate(region = "Block Groups in the U.S.")
+
+
+fac <- prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, 
+           TRACTCE10, block_group, 
+           Renter_Occp_HU_ACS_15_19,
+           Tot_Occp_Units_ACS_15_19 ) %>% 
+  summarize() %>% 
+  ungroup()  %>%
+  mutate(pct_rented = (Renter_Occp_HU_ACS_15_19 / Tot_Occp_Units_ACS_15_19) * 100) %>% 
+  summarize(Mean = mean(pct_rented, 
+                        na.rm = TRUE),
+            Mean = round(Mean, digits = 1),
+            Median = median(pct_rented, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Block Groups Where\nFacilities are Located")
+  
+
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage of Occupied Housing Units Not Owner Occupied in Block Groups</b></span><br><i>Data from the 2015 - 2019 ACS</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
+
+
+
+
+
 # by facility type 
 prison_boundaries_block_census  %>%
   group_by(STATE, COUNTY, TRACTCE10,
@@ -1544,6 +1905,25 @@ prison_boundaries_block_census  %>%
         plot.title = element_text(face = "bold", hjust = 0.5)) +
   xlim(-5,100)
 
+
+# table by facility type
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, Renter_Occp_HU_ACS_15_19,
+           Tot_Occp_Units_ACS_15_19, TYPE) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% group_by(TYPE) %>%
+  mutate(pct_below = (Renter_Occp_HU_ACS_15_19 / Tot_Occp_Units_ACS_15_19) * 100) %>%
+  summarize(
+         Mean = mean(pct_below, na.rm = TRUE),
+         Median = median(pct_below, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  rename(`Facility Type` = TYPE) %>% 
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of Occupied Housing Units Not Owner Occupied in Block Groups, By Facility Type</b></span><br><i>Data from the 2015 - 2019 ACS</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
 
 
 
@@ -1571,6 +1951,27 @@ prison_boundaries_block_census %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) +
   xlim(-5,100)
+
+
+# table by security level 
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, Renter_Occp_HU_ACS_15_19,
+           Tot_Occp_Units_ACS_15_19, SECURELVL) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  group_by(SECURELVL) %>%
+  mutate(pct_below = (Renter_Occp_HU_ACS_15_19 / Tot_Occp_Units_ACS_15_19) * 100) %>%
+  summarize(
+         Mean = mean(pct_below, na.rm = TRUE),
+         Median = median(pct_below, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  rename(`Facility Security Level` = SECURELVL) %>% 
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of Occupied Housing Units Not Owner Occupied in Block Groups, By Security Level</b></span><br><i>Data from the 2015 - 2019 ACS</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
 
 
 ```
@@ -1712,6 +2113,41 @@ prison_boundaries_block_census  %>%
 
  
  
+#### table for comparison
+
+us <- blockgroup_level_data %>%
+  mutate(avg_house = Tot_Prns_in_HHD_ACS_15_19 / Tot_Occp_Units_ACS_15_19) %>% 
+  summarize(
+         Mean = mean(avg_house, na.rm = TRUE),
+         Median = median(avg_house, na.rm = TRUE)) %>%
+  mutate(region = "Block Groups in the U.S.")
+
+
+fac <- prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, 
+           TRACTCE10, block_group, 
+           Tot_Prns_in_HHD_ACS_15_19,
+           Tot_Occp_Units_ACS_15_19 ) %>% 
+  summarize() %>% 
+  ungroup()  %>%
+  mutate(avg_house = Tot_Prns_in_HHD_ACS_15_19 / Tot_Occp_Units_ACS_15_19) %>% 
+  summarize(Mean = mean(avg_house, 
+                        na.rm = TRUE),
+            Mean = round(Mean, digits = 1),
+            Median = median(avg_house, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Block Groups Where\nFacilities are Located")
+  
+
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~round(., digits=2))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Average Household Size in Block Groups (Units are People)</b></span><br><i>Data from the 2015 - 2019 ACS</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
 
 
 ```
@@ -1806,6 +2242,42 @@ prison_boundaries_block_census %>%
 
 
 
+
+
+
+#### table for comparison
+
+us <- blockgroup_level_data %>%
+  summarize(
+         Mean = mean(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         Median = median(pct_Inst_GQ_CEN_2010, na.rm = TRUE)) %>%
+  mutate(region = "Block Groups in the U.S.")
+
+
+fac <- prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, 
+           TRACTCE10, block_group,
+           pct_Inst_GQ_CEN_2010 ) %>% 
+  summarize() %>% 
+  ungroup()  %>%
+  summarize(Mean = mean(pct_Inst_GQ_CEN_2010, 
+                        na.rm = TRUE),
+            Median = median(pct_Inst_GQ_CEN_2010, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Block Groups Where\nFacilities are Located")
+  
+
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage in Institutionalized Group Quarters in Block Groups</b></span><br><i>Data from the 2010 Census</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
+
+
 # distribution of the Percentage Living in Institutional Group Quarters in block groups where facilities are,
 # faceted by facility type 
 prison_boundaries_block_census %>% 
@@ -1832,6 +2304,30 @@ prison_boundaries_block_census %>%
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   scale_x_continuous(breaks = seq(0, 100, by = 20), 
                      limits = c(-3,105)) 
+
+
+
+
+# table by facility type
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, 
+           pct_Inst_GQ_CEN_2010, TYPE) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  group_by(TYPE) %>%
+  summarize(
+         Mean = mean(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         Median = median(pct_Inst_GQ_CEN_2010, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  rename(`Facility Type` = TYPE) %>% 
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Living in Institutional Group Quarters in Block Groups, By Facility Type</b></span><br><i>Data from the 2010 Census</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
 
 
 
@@ -1862,6 +2358,26 @@ prison_boundaries_block_census %>%
   scale_x_continuous(breaks = seq(0, 100, by = 20), 
                      limits = c(-3,105)) 
 
+
+
+# table by facility security level
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, 
+           pct_Inst_GQ_CEN_2010, SECURELVL) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  group_by(SECURELVL) %>%
+  summarize(
+         Mean = mean(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         Median = median(pct_Inst_GQ_CEN_2010, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  rename(`Facility Security Level` = SECURELVL) %>% 
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Living in Institutional Group Quarters in Block Groups, By Facility Security Level</b></span><br><i>Data from the 2010 Census</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
 
 
 
@@ -1996,6 +2512,25 @@ prison_boundaries_block_census %>%
 
 
 
+
+# table by state
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, 
+           pct_Inst_GQ_CEN_2010) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  group_by(STATE) %>%
+  summarize(
+         Mean = mean(pct_Inst_GQ_CEN_2010, na.rm = TRUE),
+         Median = median(pct_Inst_GQ_CEN_2010, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Living in Institutional Group Quarters in Block Groups, By State</b></span><br><i>Data from the 2010 Census</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
 ```
 
 </div>
@@ -2057,6 +2592,42 @@ prison_boundaries_block_census %>%
   scale_x_continuous(breaks = seq(0, 60, by = 10), limits = c(-3,60))
 
 
+
+#### table for comparison
+
+us <- blockgroup_level_data %>%
+  summarize(
+         Mean = mean(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE)) %>%
+  mutate(region = "Block Groups in the U.S.")
+
+
+fac <- prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, 
+           TRACTCE10, block_group,
+           pct_PUB_ASST_INC_ACS_15_19 ) %>% 
+  summarize() %>% 
+  ungroup()  %>%
+  summarize(Mean = mean(pct_PUB_ASST_INC_ACS_15_19, 
+                        na.rm = TRUE),
+            Median = median(pct_PUB_ASST_INC_ACS_15_19, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Block Groups Where\nFacilities are Located")
+  
+
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Receiving Public Assistance Income in Block Groups</b></span><br><i>Data from the 2010 Census</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
+
+
+
+
 # distribution of percentage receiving public assistance income in block groups where facilities are located
 # faceted by facility type 
 prison_boundaries_block_census %>% 
@@ -2082,6 +2653,27 @@ prison_boundaries_block_census %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5))  + 
   scale_x_continuous(breaks = seq(0, 50, by = 10), limits = c(-3,50))
+
+
+# table by facility type
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, 
+           pct_PUB_ASST_INC_ACS_15_19, TYPE) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  group_by(TYPE) %>%
+  summarize(
+         Mean = mean(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  rename(`Facility Type` = TYPE) %>% 
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Receiving Public Assistance Income in Block Groups, By Facility Type</b></span><br><i>Data from the 2010 Census</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
 
 
 
@@ -2111,6 +2703,27 @@ prison_boundaries_block_census  %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   scale_x_continuous(breaks = seq(0, 50, by = 10), limits = c(-3,50))
+
+
+# table by facility security level
+
+prison_boundaries_block_census %>%
+  group_by(STATE, COUNTY, TRACTCE10,
+           block_group, 
+           pct_PUB_ASST_INC_ACS_15_19, SECURELVL) %>%
+  summarize(n = n()) %>%
+  ungroup() %>% 
+  group_by(SECURELVL) %>%
+  summarize(
+         Mean = mean(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE))  %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  rename(`Facility Security Level` = SECURELVL) %>% 
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Receiving Public Assistance Income in Block Groups, By Facility Security Level</b></span><br><i>Data from the 2010 Census</i>", 
+      align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
 
 ```
 
@@ -2148,10 +2761,7 @@ prison_boundaries_block_census %>%
   group_by(TYPE) %>% 
   mutate(
          Mean = mean(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
-         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
-         TYPE = factor(TYPE,  levels = c("LOCAL", "COUNTY",
-                                        "STATE", "FEDERAL",
-                                        "MULTI", "NOT AVAILABLE"))) %>% 
+         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE)) %>% 
   ggplot(aes(x = pct_PUB_ASST_INC_ACS_15_19)) +
   geom_histogram(alpha = .9, bins = 40) + facet_wrap(~TYPE, scales = "free_y") +
   geom_vline(aes(xintercept = Median), color = "darkred") +
@@ -2173,10 +2783,7 @@ prison_boundaries_block_census %>%
   group_by(SECURELVL) %>% 
   mutate(
          Mean = mean(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
-         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE),
-         SECURELVL = factor(SECURELVL,  levels = c("JUVENILE", "MINIMUM",
-                                        "MEDIUM", "MAXIMUM",
-                                        "CLOSE", "NOT AVAILABLE"))) %>% 
+         Median = median(pct_PUB_ASST_INC_ACS_15_19, na.rm = TRUE)) %>% 
   ggplot(aes(x = pct_PUB_ASST_INC_ACS_15_19)) +
   geom_histogram(alpha = .9, bins = 40) + 
   facet_wrap(~SECURELVL, scales = "free_y") +
@@ -2258,6 +2865,40 @@ prison_boundaries_block_census %>%
         plot.subtitle = element_text(face = "italic", hjust = .5),
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
+
+
+
+#### table for comparison
+
+us <- blockgroup_level_data %>%
+  summarize(
+         Mean = mean(pct_ENG_VW_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_ENG_VW_ACS_15_19, na.rm = TRUE)) %>%
+  mutate(region = "Block Groups in the U.S.")
+
+
+fac <- prison_boundaries_block_census %>% 
+  group_by(STATE, COUNTY, 
+           TRACTCE10, block_group,
+           pct_ENG_VW_ACS_15_19 ) %>% 
+  summarize() %>% 
+  ungroup()  %>%
+  summarize(Mean = mean(pct_ENG_VW_ACS_15_19, 
+                        na.rm = TRUE),
+            Median = median(pct_ENG_VW_ACS_15_19, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Block Groups Where\nFacilities are Located")
+  
+
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the Percentage Where No One Over 14 in the Household Speaks English 'Very Well' in Block Groups</b></span><br><i>Data from the 2015 - 2019 ACS</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
+
+
 
 
 ```
@@ -2402,6 +3043,35 @@ prison_tract %>%
         plot.title = element_text(face = "bold", hjust = 0.5)) + 
   scale_x_continuous(breaks = seq(0, 100, by = 5), limits = c(-3,105)) 
   
+
+#### table for comparison
+
+us <- tract_level_data %>%
+  summarize(
+         Mean = mean(pct_Pop_NoCompDevic_ACS_15_19, na.rm = TRUE),
+         Median = median(pct_Pop_NoCompDevic_ACS_15_19, na.rm = TRUE)) %>%
+  mutate(region = "Tracts in the U.S.")
+
+
+fac <- prison_tract %>% 
+  group_by(STATE, COUNTY, TRACTCE10,
+           pct_Pop_NoCompDevic_ACS_15_19) %>%
+  summarize(n = n()) %>%
+  ungroup() %>%
+  summarize(Mean = mean(pct_Pop_NoCompDevic_ACS_15_19, 
+                        na.rm = TRUE),
+            Median = median(pct_Pop_NoCompDevic_ACS_15_19, 
+                            na.rm = TRUE)) %>%
+  mutate(region = "Tracts Where\nFacilities are Located")
+  
+
+rbind(us, fac) %>% 
+  mutate(across(c(Mean, Median), ~paste0( round(., digits=2), "%"))) %>%
+  select(region, Mean, Median) %>%
+  rename(" " = region)  %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of the of the Population Without a Computing Device in Tracts</b></span><br><i>Data from the 2015 - 2019 ACS</i>", align = "l") %>%
+  kable_material(c("striped", "hover"), full_width = T) %>%
+  row_spec(0, background = "#D9DFEE") 
 
 
 ```
