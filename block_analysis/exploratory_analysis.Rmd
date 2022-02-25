@@ -94,7 +94,7 @@ get_census_data_safe <- function(state_code) {
     {
     getCensus(name = "pdb/blockgroup",
                       vintage = 2021,
-                      key = "fbbc8b0d3e53089da7cabc380628d6d46ae00444",
+                      key = Sys.getenv("CENSUS_KEY"),
                       vars = c("Block_group",
                                "County", 
                                "URBANIZED_AREA_POP_CEN_2010",
@@ -264,7 +264,8 @@ fac <- prison_boundaries_block_census %>%
 rbind(us, fac) %>% 
   select(region, Mean, Median) %>%
   rename(" " = region)  %>%
-  kbl(caption = "<span style = 'color:black;'><b>Distribution of Median Age in Block Groups</b></span><br><i>Data from the 2015-2019 ACS</i>", align = "l") %>%
+  kbl(caption = "<span style = 'color:black;'><b>Distribution of Median Age in Block Groups</b></span><br><i>Data from the 2015-2019 ACS</i>",
+      align = "l") %>%
   kable_material(c("striped", "hover"), full_width = T) %>%
   row_spec(0, background = "#D9DFEE") 
 
